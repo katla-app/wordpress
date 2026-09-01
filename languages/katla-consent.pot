@@ -1,0 +1,810 @@
+# Copyright (C) 2026 Katla
+# This file is distributed under the GPL-2.0-or-later.
+msgid ""
+msgstr ""
+"Project-Id-Version: Katla Cookie Consent 1.0.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/katla-wp\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-09-01T08:53:26+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.7.1\n"
+"X-Domain: katla-consent\n"
+
+#. Plugin Name of the plugin
+#: includes/class-katla-admin.php:47
+#: includes/class-katla-admin.php:202
+#: includes/class-katla-privacy.php:42
+msgid "Katla Cookie Consent"
+msgstr ""
+
+#. Plugin URI of the plugin
+#. Author URI of the plugin
+msgid "https://katla.app"
+msgstr ""
+
+#. Description of the plugin
+msgid "GDPR, CCPA/CPRA and DMA cookie compliance for WordPress and WooCommerce. Loads the hosted Katla consent widget, supports fully headless/custom banners, blocks non-consented scripts and embeds, and renders auto-generated cookie &amp; privacy policies."
+msgstr ""
+
+#. Author of the plugin
+#: includes/class-katla-blocks.php:99
+msgid "Katla"
+msgstr ""
+
+#: includes/class-katla-admin.php:48
+msgid "Katla Consent"
+msgstr ""
+
+#: includes/class-katla-admin.php:82
+msgid "Settings"
+msgstr ""
+
+#: includes/class-katla-admin.php:117
+#: includes/class-katla-admin.php:927
+msgid "Remove"
+msgstr ""
+
+#: includes/class-katla-admin.php:171
+msgid "General"
+msgstr ""
+
+#: includes/class-katla-admin.php:172
+msgid "Blocking"
+msgstr ""
+
+#: includes/class-katla-admin.php:173
+msgid "Policies"
+msgstr ""
+
+#: includes/class-katla-admin.php:177
+msgid "WooCommerce"
+msgstr ""
+
+#: includes/class-katla-admin.php:180
+msgid "Tools"
+msgstr ""
+
+#: includes/class-katla-admin.php:265
+msgid "Add your Katla Site ID below to start collecting consent. You can find it in the Widget section of your site settings at katla.app."
+msgstr ""
+
+#: includes/class-katla-admin.php:274
+msgid "Katla is configured but currently switched off, so no consent banner is shown to visitors."
+msgstr ""
+
+#: includes/class-katla-admin.php:281
+msgid "headless (cookie guard only)"
+msgstr ""
+
+#: includes/class-katla-admin.php:282
+msgid "hosted widget"
+msgstr ""
+
+#. translators: %s: the active mode.
+#: includes/class-katla-admin.php:289
+msgid "Katla is active in %s mode."
+msgstr ""
+
+#: includes/class-katla-admin.php:308
+msgid "Site ID"
+msgstr ""
+
+#: includes/class-katla-admin.php:309
+msgid "The UUID of your site in Katla. Find it under Widget in your site settings."
+msgstr ""
+
+#: includes/class-katla-admin.php:315
+msgid "Verification token"
+msgstr ""
+
+#: includes/class-katla-admin.php:316
+msgid "Optional. Prints the katla-verification meta tag so you can verify domain ownership without editing your theme."
+msgstr ""
+
+#: includes/class-katla-admin.php:321
+msgid "Enable on the front end"
+msgstr ""
+
+#: includes/class-katla-admin.php:322
+msgid "Load the consent script for visitors."
+msgstr ""
+
+#: includes/class-katla-admin.php:327
+msgid "Mode"
+msgstr ""
+
+#: includes/class-katla-admin.php:329
+msgid "Hosted widget — Katla renders the banner, styled from your dashboard."
+msgstr ""
+
+#: includes/class-katla-admin.php:330
+msgid "Advanced / headless — cookie guard and consent API only, no hosted UI."
+msgstr ""
+
+#: includes/class-katla-admin.php:336
+msgid "Headless banner"
+msgstr ""
+
+#: includes/class-katla-admin.php:338
+msgid "Use this plugin's banner — restyle it with CSS custom properties and the katla_translations filter."
+msgstr ""
+
+#: includes/class-katla-admin.php:339
+msgid "Bring your own banner — the plugin only loads the guard and fires katla:consent events."
+msgstr ""
+
+#: includes/class-katla-admin.php:341
+msgid "Only applies in headless mode."
+msgstr ""
+
+#: includes/class-katla-admin.php:346
+msgid "Script placement"
+msgstr ""
+
+#: includes/class-katla-admin.php:348
+msgid "Head — recommended. The cookie guard must run before other scripts can set cookies."
+msgstr ""
+
+#: includes/class-katla-admin.php:349
+msgid "Footer — only for debugging or when a caching plugin requires it."
+msgstr ""
+
+#: includes/class-katla-admin.php:355
+#: assets/js/katla-blocks.js:90
+#: assets/js/katla-blocks.js:145
+msgid "Language"
+msgstr ""
+
+#: includes/class-katla-admin.php:357
+msgid "Follow the WordPress locale"
+msgstr ""
+
+#: includes/class-katla-admin.php:358
+msgid "Use a fixed locale"
+msgstr ""
+
+#: includes/class-katla-admin.php:359
+msgid "Let Katla detect the visitor's browser language"
+msgstr ""
+
+#: includes/class-katla-admin.php:365
+msgid "Fixed locale"
+msgstr ""
+
+#: includes/class-katla-admin.php:367
+msgid "Used when Language is set to a fixed locale."
+msgstr ""
+
+#: includes/class-katla-admin.php:372
+msgid "Theme override"
+msgstr ""
+
+#: includes/class-katla-admin.php:374
+msgid "Use the setting from my Katla dashboard"
+msgstr ""
+
+#: includes/class-katla-admin.php:375
+msgid "Light"
+msgstr ""
+
+#: includes/class-katla-admin.php:376
+msgid "Dark"
+msgstr ""
+
+#: includes/class-katla-admin.php:382
+msgid "Dispatch consent events"
+msgstr ""
+
+#: includes/class-katla-admin.php:383
+msgid "Fire a window katla:consent CustomEvent whenever consent changes, matching the Katla SDK contract."
+msgstr ""
+
+#: includes/class-katla-admin.php:388
+msgid "Google Consent Mode v2 bridge"
+msgstr ""
+
+#: includes/class-katla-admin.php:389
+msgid "Push gtag consent default and update calls from this plugin. Leave off if you already enabled Google Consent Mode in your Katla dashboard — the hosted widget does it for you."
+msgstr ""
+
+#: includes/class-katla-admin.php:394
+msgid "Debug logging"
+msgstr ""
+
+#: includes/class-katla-admin.php:395
+msgid "Log guard and consent activity to the browser console."
+msgstr ""
+
+#: includes/class-katla-admin.php:409
+msgid "Protect essential cookies"
+msgstr ""
+
+#: includes/class-katla-admin.php:410
+msgid "Let strictly necessary WordPress (and WooCommerce) cookies through the cookie guard even before consent, so logins, carts and sessions keep working."
+msgstr ""
+
+#: includes/class-katla-admin.php:415
+msgid "Additional allowed cookies"
+msgstr ""
+
+#: includes/class-katla-admin.php:416
+msgid "One cookie name per line. A trailing asterisk matches by prefix, for example my_plugin_*."
+msgstr ""
+
+#: includes/class-katla-admin.php:421
+msgid "Block scripts until consent"
+msgstr ""
+
+#: includes/class-katla-admin.php:422
+msgid "Neutralise the scripts below server-side and run them only once their category is allowed."
+msgstr ""
+
+#: includes/class-katla-admin.php:427
+msgid "Blocked script handles"
+msgstr ""
+
+#: includes/class-katla-admin.php:428
+msgid "Match enqueued scripts by their WordPress handle."
+msgstr ""
+
+#: includes/class-katla-admin.php:434
+msgid "Blocked script URLs"
+msgstr ""
+
+#: includes/class-katla-admin.php:435
+msgid "Match any script whose URL contains this text, for example googletagmanager.com. Useful for scripts other plugins print directly."
+msgstr ""
+
+#: includes/class-katla-admin.php:441
+msgid "Block third-party embeds"
+msgstr ""
+
+#: includes/class-katla-admin.php:442
+msgid "Replace iframes from the domains below with a consent placeholder until the visitor allows the chosen category."
+msgstr ""
+
+#: includes/class-katla-admin.php:447
+msgid "Embed category"
+msgstr ""
+
+#: includes/class-katla-admin.php:453
+msgid "Blocked embed domains"
+msgstr ""
+
+#: includes/class-katla-admin.php:454
+msgid "One domain fragment per line."
+msgstr ""
+
+#: includes/class-katla-admin.php:466
+#: assets/js/katla-blocks.js:98
+msgid "Rendering"
+msgstr ""
+
+#: includes/class-katla-admin.php:468
+msgid "On the server — the policy is part of the page HTML, so search engines can index it. Recommended."
+msgstr ""
+
+#: includes/class-katla-admin.php:469
+msgid "In the browser — uses Katla's hosted policy script."
+msgstr ""
+
+#: includes/class-katla-admin.php:475
+msgid "Cache lifetime"
+msgstr ""
+
+#: includes/class-katla-admin.php:476
+msgid "How long policy and cookie data fetched from Katla is cached, in seconds. Set to 0 to disable caching."
+msgstr ""
+
+#: includes/class-katla-admin.php:479
+msgid "Blocks and shortcodes"
+msgstr ""
+
+#: includes/class-katla-admin.php:480
+msgid "Add these anywhere in your content, or use the matching blocks in the Katla category of the block inserter."
+msgstr ""
+
+#: includes/class-katla-admin.php:484
+msgid "Full cookie and privacy policy."
+msgstr ""
+
+#: includes/class-katla-admin.php:485
+msgid "Cookie policy only."
+msgstr ""
+
+#: includes/class-katla-admin.php:486
+msgid "Cookie tables only."
+msgstr ""
+
+#: includes/class-katla-admin.php:487
+msgid "Cookies in one category."
+msgstr ""
+
+#: includes/class-katla-admin.php:488
+msgid "Button that reopens the preferences dialog."
+msgstr ""
+
+#: includes/class-katla-admin.php:489
+msgid "Hold back the enclosed scripts or iframes until that category is allowed."
+msgstr ""
+
+#: includes/class-katla-admin.php:490
+msgid "Show the enclosed content only while that category is allowed."
+msgstr ""
+
+#: includes/class-katla-admin.php:512
+msgid "Protect store cookies and scripts"
+msgstr ""
+
+#: includes/class-katla-admin.php:513
+msgid "Allow WooCommerce cart, session and checkout cookies through the guard, and never gate store-critical scripts behind consent."
+msgstr ""
+
+#: includes/class-katla-admin.php:523
+msgid "Protected cookies"
+msgstr ""
+
+#: includes/class-katla-admin.php:525
+msgid "Order attribution cookies (sbjs_*) are deliberately left out — they are marketing cookies and stay behind consent. Gate the wc-order-attribution script on the Blocking tab to stop them being set at all."
+msgstr ""
+
+#: includes/class-katla-admin.php:530
+msgid "Checkout privacy notice"
+msgstr ""
+
+#: includes/class-katla-admin.php:531
+msgid "Append a cookie settings link to the privacy text shown at checkout and registration."
+msgstr ""
+
+#: includes/class-katla-admin.php:536
+msgid "My Account link"
+msgstr ""
+
+#: includes/class-katla-admin.php:537
+msgid "Show a cookie settings link on the My Account dashboard."
+msgstr ""
+
+#: includes/class-katla-admin.php:550
+msgid "Connection"
+msgstr ""
+
+#: includes/class-katla-admin.php:556
+msgid "Test connection"
+msgstr ""
+
+#: includes/class-katla-admin.php:558
+#: includes/class-katla-admin.php:610
+msgid "Add a Site ID on the General tab first."
+msgstr ""
+
+#: includes/class-katla-admin.php:563
+msgid "Scanned cookies"
+msgstr ""
+
+#: includes/class-katla-admin.php:565
+msgid "Clear cached Katla data"
+msgstr ""
+
+#: includes/class-katla-admin.php:569
+msgid "Cookie policy page"
+msgstr ""
+
+#: includes/class-katla-admin.php:577
+msgid "Create a page containing the Katla policy block."
+msgstr ""
+
+#: includes/class-katla-admin.php:579
+msgid "Create cookie policy page"
+msgstr ""
+
+#: includes/class-katla-admin.php:590
+msgid "Delete settings on uninstall"
+msgstr ""
+
+#: includes/class-katla-admin.php:591
+msgid "Remove all Katla options and cached data when the plugin is deleted."
+msgstr ""
+
+#: includes/class-katla-admin.php:640
+msgid "No cookies have been classified for this site yet. Run a scan in Katla."
+msgstr ""
+
+#: includes/class-katla-admin.php:876
+msgid "Add rule"
+msgstr ""
+
+#: includes/class-katla-admin.php:939
+msgid "Hide from roles"
+msgstr ""
+
+#: includes/class-katla-admin.php:958
+msgid "Skip the consent script for logged-in users with these roles. Handy while developing — but remember they will then be tracked without a consent record."
+msgstr ""
+
+#: includes/class-katla-admin.php:1024
+msgid "You are not allowed to do that."
+msgstr ""
+
+#. translators: %d: number of cache entries.
+#: includes/class-katla-admin.php:1053
+msgid "Cleared %d cached response from Katla."
+msgid_plural "Cleared %d cached responses from Katla."
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %s: error message.
+#: includes/class-katla-admin.php:1075
+msgid "Could not reach Katla: %s"
+msgstr ""
+
+#. translators: %s: verified domain.
+#: includes/class-katla-admin.php:1084
+msgid "Connected to Katla. This Site ID belongs to %s."
+msgstr ""
+
+#. translators: %s: link to the created page.
+#: includes/class-katla-admin.php:1109
+msgid "Cookie policy page ready: %s"
+msgstr ""
+
+#: includes/class-katla-categories.php:73
+msgid "Functional"
+msgstr ""
+
+#: includes/class-katla-categories.php:74
+msgid "These cookies are necessary for the website to function properly."
+msgstr ""
+
+#: includes/class-katla-categories.php:77
+msgid "Analytics"
+msgstr ""
+
+#: includes/class-katla-categories.php:78
+msgid "These cookies help us understand how visitors interact with the website."
+msgstr ""
+
+#: includes/class-katla-categories.php:81
+msgid "Marketing"
+msgstr ""
+
+#: includes/class-katla-categories.php:82
+msgid "These cookies are used to deliver relevant advertisements."
+msgstr ""
+
+#: includes/class-katla-categories.php:85
+msgid "Personalization"
+msgstr ""
+
+#: includes/class-katla-categories.php:86
+msgid "These cookies allow the website to remember choices you make."
+msgstr ""
+
+#: includes/class-katla-categories.php:89
+msgid "Security"
+msgstr ""
+
+#: includes/class-katla-categories.php:90
+msgid "These cookies help keep the website secure."
+msgstr ""
+
+#: includes/class-katla-categories.php:93
+msgid "Other"
+msgstr ""
+
+#: includes/class-katla-categories.php:94
+msgid "These cookies have not been categorized yet."
+msgstr ""
+
+#: includes/class-katla-client.php:161
+msgid "No Katla Site ID has been configured."
+msgstr ""
+
+#. translators: %d: HTTP status code.
+#: includes/class-katla-client.php:206
+msgid "Katla returned HTTP %d."
+msgstr ""
+
+#: includes/class-katla-client.php:214
+msgid "Katla returned a response that could not be read."
+msgstr ""
+
+#: includes/class-katla-frontend.php:328
+msgid "We value your privacy"
+msgstr ""
+
+#: includes/class-katla-frontend.php:329
+msgid "We use cookies to improve your experience, analyse traffic and personalise content. You can choose which categories to allow."
+msgstr ""
+
+#: includes/class-katla-frontend.php:330
+msgid "Accept all"
+msgstr ""
+
+#: includes/class-katla-frontend.php:331
+msgid "Reject all"
+msgstr ""
+
+#: includes/class-katla-frontend.php:332
+msgid "Customise"
+msgstr ""
+
+#: includes/class-katla-frontend.php:333
+msgid "Save preferences"
+msgstr ""
+
+#: includes/class-katla-frontend.php:334
+msgid "Close"
+msgstr ""
+
+#: includes/class-katla-frontend.php:335
+#: assets/js/katla-blocks.js:185
+#: assets/js/katla-blocks.js:189
+#: assets/js/katla-blocks.js:213
+msgid "Cookie settings"
+msgstr ""
+
+#: includes/class-katla-frontend.php:336
+msgid "Cookie preferences"
+msgstr ""
+
+#: includes/class-katla-frontend.php:337
+msgid "Always active"
+msgstr ""
+
+#: includes/class-katla-frontend.php:338
+msgid "Show cookies"
+msgstr ""
+
+#: includes/class-katla-frontend.php:339
+msgid "Hide cookies"
+msgstr ""
+
+#: includes/class-katla-frontend.php:340
+msgid "Cookie"
+msgstr ""
+
+#: includes/class-katla-frontend.php:341
+msgid "Domain"
+msgstr ""
+
+#: includes/class-katla-frontend.php:342
+msgid "Duration"
+msgstr ""
+
+#: includes/class-katla-frontend.php:343
+msgid "Purpose"
+msgstr ""
+
+#: includes/class-katla-frontend.php:344
+msgid "Privacy policy"
+msgstr ""
+
+#: includes/class-katla-frontend.php:346
+msgid "This content is blocked"
+msgstr ""
+
+#. translators: %s: cookie category name, e.g. Marketing.
+#: includes/class-katla-frontend.php:348
+msgid "Allow %s cookies to view this content."
+msgstr ""
+
+#: includes/class-katla-frontend.php:349
+msgid "Allow and show content"
+msgstr ""
+
+#: includes/class-katla-privacy.php:36
+msgid "This site uses Katla to collect and store cookie consent. Katla records the consent choice, the categories allowed, a consent ID, the timestamp and the browser user agent."
+msgstr ""
+
+#: includes/class-katla-privacy.php:38
+msgid "Cookies and consent"
+msgstr ""
+
+#: includes/class-katla-privacy.php:39
+msgid "When you first visit this site you are asked which categories of cookies you allow. Your choice is stored in a cookie named _katla_consent for 365 days, and a record of the choice is stored by our consent provider, Katla, so we can demonstrate compliance. You can change or withdraw your choice at any time through the cookie settings link."
+msgstr ""
+
+#: includes/class-katla-privacy.php:40
+msgid "A full, automatically maintained list of the cookies this site sets — including their purpose, provider and duration — is available on our cookie policy page."
+msgstr ""
+
+#: includes/class-katla-privacy.php:59
+msgid "Cookie Policy"
+msgstr ""
+
+#: includes/class-katla-settings.php:213
+msgid "The Site ID must be a valid UUID. Copy it from the Widget section of your site settings in Katla."
+msgstr ""
+
+#: includes/class-katla-shortcodes.php:57
+msgid "Katla: add your Site ID in Settings → Katla Consent to render the policy."
+msgstr ""
+
+#. translators: %s: error message.
+#: includes/class-katla-shortcodes.php:86
+msgid "Katla could not load the policy: %s"
+msgstr ""
+
+#: includes/class-katla-shortcodes.php:95
+msgid "Katla returned an empty policy. Run a scan and configure your privacy policy details in Katla."
+msgstr ""
+
+#: includes/class-katla-shortcodes.php:167
+msgid "Katla: add your Site ID in Settings → Katla Consent to render the cookie table."
+msgstr ""
+
+#. translators: %s: error message.
+#: includes/class-katla-shortcodes.php:177
+msgid "Katla could not load your cookies: %s"
+msgstr ""
+
+#: includes/class-katla-shortcodes.php:232
+msgid "Katla has not classified any cookies for this site yet. Run a scan in Katla first."
+msgstr ""
+
+#: assets/js/katla-blocks.js:21
+msgid "Follow the site language"
+msgstr ""
+
+#: assets/js/katla-blocks.js:31
+msgid "All categories"
+msgstr ""
+
+#: assets/js/katla-blocks.js:51
+msgid "No Katla Site ID configured yet — nothing will render on the front end."
+msgstr ""
+
+#: assets/js/katla-blocks.js:65
+msgid "Full cookie and privacy policy"
+msgstr ""
+
+#: assets/js/katla-blocks.js:66
+msgid "Cookie policy"
+msgstr ""
+
+#: assets/js/katla-blocks.js:67
+msgid "Cookie tables only"
+msgstr ""
+
+#: assets/js/katla-blocks.js:78
+msgid "Policy"
+msgstr ""
+
+#: assets/js/katla-blocks.js:80
+msgid "Content"
+msgstr ""
+
+#: assets/js/katla-blocks.js:101
+msgid "On the server (indexable)"
+msgstr ""
+
+#: assets/js/katla-blocks.js:102
+msgid "In the browser"
+msgstr ""
+
+#: assets/js/katla-blocks.js:106
+msgid "Search engines will not see this content."
+msgstr ""
+
+#: assets/js/katla-blocks.js:107
+msgid "The policy is rendered into the page HTML and cached."
+msgstr ""
+
+#: assets/js/katla-blocks.js:114
+msgid "Katla policy"
+msgstr ""
+
+#: assets/js/katla-blocks.js:135
+msgid "Cookie table"
+msgstr ""
+
+#: assets/js/katla-blocks.js:137
+msgid "Category"
+msgstr ""
+
+#: assets/js/katla-blocks.js:158
+msgid "Katla cookie table"
+msgstr ""
+
+#: assets/js/katla-blocks.js:160
+msgid "One category, listed from your latest Katla scan."
+msgstr ""
+
+#: assets/js/katla-blocks.js:161
+msgid "Every scanned cookie, grouped by category."
+msgstr ""
+
+#: assets/js/katla-blocks.js:187
+msgid "Label"
+msgstr ""
+
+#: assets/js/katla-blocks.js:195
+msgid "Appearance"
+msgstr ""
+
+#: assets/js/katla-blocks.js:198
+msgid "Button"
+msgstr ""
+
+#: assets/js/katla-blocks.js:199
+msgid "Text link"
+msgstr ""
+
+#: blocks/cookie-table/block.json
+msgctxt "block title"
+msgid "Katla Cookie Table"
+msgstr ""
+
+#: blocks/cookie-table/block.json
+msgctxt "block description"
+msgid "Lists the cookies Katla has scanned on your site, grouped by category."
+msgstr ""
+
+#: blocks/cookie-table/block.json
+#: blocks/policy/block.json
+#: blocks/settings-button/block.json
+msgctxt "block keyword"
+msgid "cookie"
+msgstr ""
+
+#: blocks/cookie-table/block.json
+msgctxt "block keyword"
+msgid "table"
+msgstr ""
+
+#: blocks/cookie-table/block.json
+#: blocks/policy/block.json
+msgctxt "block keyword"
+msgid "gdpr"
+msgstr ""
+
+#: blocks/cookie-table/block.json
+#: blocks/policy/block.json
+#: blocks/settings-button/block.json
+msgctxt "block keyword"
+msgid "consent"
+msgstr ""
+
+#: blocks/policy/block.json
+msgctxt "block title"
+msgid "Katla Policy"
+msgstr ""
+
+#: blocks/policy/block.json
+msgctxt "block description"
+msgid "Renders your auto-generated cookie and privacy policy from Katla."
+msgstr ""
+
+#: blocks/policy/block.json
+msgctxt "block keyword"
+msgid "privacy"
+msgstr ""
+
+#: blocks/policy/block.json
+msgctxt "block keyword"
+msgid "policy"
+msgstr ""
+
+#: blocks/settings-button/block.json
+msgctxt "block title"
+msgid "Katla Cookie Settings"
+msgstr ""
+
+#: blocks/settings-button/block.json
+msgctxt "block description"
+msgid "A button or link that reopens the cookie preferences dialog."
+msgstr ""
+
+#: blocks/settings-button/block.json
+msgctxt "block keyword"
+msgid "settings"
+msgstr ""
+
+#: blocks/settings-button/block.json
+msgctxt "block keyword"
+msgid "preferences"
+msgstr ""

@@ -1,0 +1,23 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "katla/settings-button",
+  "title": "Katla Cookie Settings",
+  "category": "katla",
+  "icon": "admin-generic",
+  "description": "A button or link that reopens the cookie preferences dialog.",
+  "keywords": ["cookie", "settings", "preferences", "consent"],
+  "textdomain": "katla-consent",
+  "supports": {
+    "html": false,
+    "spacing": { "margin": true },
+    "typography": { "fontSize": true }
+  },
+  "attributes": {
+    "label": { "type": "string", "default": "" },
+    "style": { "type": "string", "default": "button" }
+  },
+  "editorScript": "katla-blocks-editor",
+  "editorStyle": "katla-blocks-editor-style",
+  "style": "katla"
+}

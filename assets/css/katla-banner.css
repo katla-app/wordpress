@@ -1,0 +1,394 @@
+/**
+ * Katla Cookie Consent — built-in banner (headless mode).
+ *
+ * Everything is driven by the custom properties declared in katla.css, so a
+ * theme can restyle the banner by redefining them:
+ *
+ *     :root { --katla-primary: #111; --katla-radius: 0; }
+ */
+
+.katla-wp,
+.katla-wp-modal {
+	font-family: var(--katla-font);
+	box-sizing: border-box;
+}
+
+.katla-wp *,
+.katla-wp-modal * {
+	box-sizing: inherit;
+}
+
+/* Banner ----------------------------------------------------------------- */
+
+.katla-wp--banner {
+	position: fixed;
+	z-index: 2147483000;
+	inset-inline-end: 20px;
+	inset-block-end: 20px;
+	inline-size: min(420px, calc(100vw - 40px));
+	padding: 20px;
+	border: 1px solid var(--katla-border);
+	border-radius: var(--katla-radius);
+	background: var(--katla-bg);
+	color: var(--katla-fg);
+	box-shadow: var(--katla-shadow);
+	animation: katla-wp-in 0.24s ease-out;
+}
+
+.katla-wp--banner[hidden] {
+	display: none;
+}
+
+@keyframes katla-wp-in {
+	from {
+		opacity: 0;
+		transform: translateY(12px);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.katla-wp--banner {
+		animation: none;
+	}
+}
+
+.katla-wp__title {
+	margin: 0 0 8px;
+	font-size: 1.05rem;
+	font-weight: 600;
+	line-height: 1.3;
+}
+
+.katla-wp__description {
+	margin: 0 0 12px;
+	color: var(--katla-muted);
+	font-size: 0.875rem;
+	line-height: 1.55;
+}
+
+.katla-wp__policy {
+	display: inline-block;
+	margin-bottom: 14px;
+	color: var(--katla-primary);
+	font-size: 0.8125rem;
+}
+
+.katla-wp__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.katla-wp__btn {
+	appearance: none;
+	flex: 1 1 auto;
+	padding: 10px 14px;
+	border: 1px solid transparent;
+	border-radius: calc(var(--katla-radius) / 1.6);
+	font: inherit;
+	font-size: 0.875rem;
+	font-weight: 600;
+	line-height: 1.2;
+	text-align: center;
+	cursor: pointer;
+	transition: filter 0.15s ease, background-color 0.15s ease;
+}
+
+.katla-wp__btn:focus-visible {
+	outline: 2px solid var(--katla-primary);
+	outline-offset: 2px;
+}
+
+.katla-wp__btn--ghost {
+	border-color: var(--katla-border);
+	background: transparent;
+	color: var(--katla-fg);
+	font-weight: 500;
+}
+
+/*
+ * DMA equal prominence: "Reject all" and "Accept all" share identical size,
+ * padding and weight. Only the hue differs, so neither is the nudged choice.
+ */
+.katla-wp__btn--equal {
+	background: var(--katla-fg);
+	color: var(--katla-bg);
+}
+
+.katla-wp__btn--accept {
+	background: var(--katla-primary);
+	color: var(--katla-primary-fg);
+}
+
+.katla-wp__btn:hover {
+	filter: brightness(1.1);
+}
+
+/* Floating settings button ------------------------------------------------ */
+
+.katla-wp__settings-button {
+	position: fixed;
+	z-index: 2147482000;
+	inset-inline-start: 16px;
+	inset-block-end: 16px;
+	padding: 8px 14px;
+	border: 1px solid var(--katla-border);
+	border-radius: 999px;
+	background: var(--katla-bg);
+	color: var(--katla-fg);
+	font: inherit;
+	font-size: 0.8125rem;
+	box-shadow: var(--katla-shadow);
+	cursor: pointer;
+	opacity: 0.85;
+}
+
+.katla-wp__settings-button:hover,
+.katla-wp__settings-button:focus-visible {
+	opacity: 1;
+}
+
+/* Preferences dialog ------------------------------------------------------ */
+
+.katla-wp-modal {
+	position: fixed;
+	z-index: 2147483001;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 20px;
+}
+
+.katla-wp-modal[hidden] {
+	display: none;
+}
+
+.katla-wp-modal__backdrop {
+	position: absolute;
+	inset: 0;
+	background: rgba(0, 0, 0, 0.55);
+}
+
+.katla-wp-modal__panel {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	inline-size: min(640px, 100%);
+	max-block-size: min(720px, calc(100vh - 40px));
+	border-radius: var(--katla-radius);
+	background: var(--katla-bg);
+	color: var(--katla-fg);
+	box-shadow: var(--katla-shadow);
+	overflow: hidden;
+}
+
+.katla-wp-modal__header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 18px 20px;
+	border-bottom: 1px solid var(--katla-border);
+}
+
+.katla-wp-modal__title {
+	margin: 0;
+	font-size: 1rem;
+	font-weight: 600;
+}
+
+.katla-wp-modal__close {
+	appearance: none;
+	padding: 0 6px;
+	border: 0;
+	background: none;
+	color: var(--katla-muted);
+	font-size: 1.4rem;
+	line-height: 1;
+	cursor: pointer;
+}
+
+.katla-wp-modal__body {
+	flex: 1 1 auto;
+	padding: 8px 20px;
+	overflow-y: auto;
+}
+
+.katla-wp-modal__policy {
+	display: inline-block;
+	margin: 12px 0;
+	color: var(--katla-primary);
+	font-size: 0.8125rem;
+}
+
+.katla-wp-modal__footer {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	padding: 16px 20px;
+	border-top: 1px solid var(--katla-border);
+}
+
+.katla-wp-modal-open {
+	overflow: hidden;
+}
+
+/* Category accordion ------------------------------------------------------ */
+
+.katla-cat {
+	border-bottom: 1px solid var(--katla-border);
+}
+
+.katla-cat:last-child {
+	border-bottom: 0;
+}
+
+.katla-cat__head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 4px 0;
+}
+
+.katla-cat__summary {
+	display: flex;
+	flex: 1 1 auto;
+	align-items: center;
+	gap: 8px;
+	padding: 14px 0;
+	border: 0;
+	background: none;
+	color: inherit;
+	font: inherit;
+	font-weight: 600;
+	font-size: 0.9375rem;
+	text-align: start;
+	cursor: pointer;
+}
+
+.katla-cat__chevron {
+	inline-size: 8px;
+	block-size: 8px;
+	border-inline-end: 2px solid currentColor;
+	border-block-end: 2px solid currentColor;
+	transform: rotate(45deg);
+	transition: transform 0.15s ease;
+	opacity: 0.6;
+}
+
+.katla-cat__summary[aria-expanded='true'] .katla-cat__chevron {
+	transform: rotate(-135deg);
+}
+
+.katla-cat__required {
+	color: var(--katla-muted);
+	font-size: 0.8125rem;
+	white-space: nowrap;
+}
+
+.katla-cat__switch {
+	position: relative;
+	flex: 0 0 auto;
+	inline-size: 42px;
+	block-size: 24px;
+	cursor: pointer;
+}
+
+.katla-cat__switch input {
+	position: absolute;
+	opacity: 0;
+	inline-size: 100%;
+	block-size: 100%;
+	margin: 0;
+	cursor: pointer;
+}
+
+.katla-cat__slider {
+	position: absolute;
+	inset: 0;
+	border-radius: 999px;
+	background: var(--katla-border);
+	transition: background-color 0.15s ease;
+	pointer-events: none;
+}
+
+.katla-cat__slider::after {
+	content: '';
+	position: absolute;
+	inset-block-start: 3px;
+	inset-inline-start: 3px;
+	inline-size: 18px;
+	block-size: 18px;
+	border-radius: 50%;
+	background: var(--katla-bg);
+	transition: transform 0.15s ease;
+}
+
+.katla-cat__switch input:checked + .katla-cat__slider {
+	background: var(--katla-primary);
+}
+
+.katla-cat__switch input:checked + .katla-cat__slider::after {
+	transform: translateX(18px);
+}
+
+.katla-cat__switch input:focus-visible + .katla-cat__slider {
+	outline: 2px solid var(--katla-primary);
+	outline-offset: 2px;
+}
+
+.katla-cat__body {
+	padding: 0 0 16px;
+}
+
+.katla-cat__body[hidden] {
+	display: none;
+}
+
+.katla-cat__description {
+	margin: 0 0 10px;
+	color: var(--katla-muted);
+	font-size: 0.8125rem;
+	line-height: 1.55;
+}
+
+.katla-cat__table-wrap {
+	overflow-x: auto;
+}
+
+.katla-cat__table {
+	inline-size: 100%;
+	border-collapse: collapse;
+	font-size: 0.75rem;
+}
+
+.katla-cat__table th,
+.katla-cat__table td {
+	padding: 6px 8px;
+	border-block-end: 1px solid var(--katla-border);
+	text-align: start;
+	vertical-align: top;
+}
+
+.katla-cat__table th {
+	color: var(--katla-muted);
+	font-weight: 600;
+	white-space: nowrap;
+}
+
+/* Small screens ----------------------------------------------------------- */
+
+@media (max-width: 520px) {
+	.katla-wp--banner {
+		inset-inline: 10px;
+		inset-block-end: 10px;
+		inline-size: auto;
+	}
+
+	.katla-wp__actions .katla-wp__btn,
+	.katla-wp-modal__footer .katla-wp__btn {
+		flex: 1 1 100%;
+	}
+}

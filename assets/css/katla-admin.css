@@ -1,0 +1,45 @@
+/**
+ * Katla Cookie Consent — settings screen.
+ */
+
+.katla-admin .katla-radio {
+	display: block;
+	margin-block-end: 6px;
+}
+
+.katla-admin .katla-map__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	margin-block-end: 8px;
+}
+
+.katla-admin .katla-map__row input[type='text'] {
+	flex: 1 1 260px;
+}
+
+.katla-admin .katla-map__remove {
+	color: #b32d2e;
+	text-decoration: none;
+}
+
+.katla-admin .katla-action {
+	display: inline-block;
+	margin-block-start: 8px;
+	margin-inline-end: 8px;
+}
+
+.katla-admin .katla-summary,
+.katla-admin .katla-shortcodes {
+	max-inline-size: 640px;
+	margin-block-end: 8px;
+}
+
+.katla-admin .katla-shortcodes td:first-child {
+	inline-size: 42%;
+}
+
+.katla-admin .katla-error {
+	color: #b32d2e;
+}

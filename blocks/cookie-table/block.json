@@ -1,0 +1,23 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "katla/cookie-table",
+  "title": "Katla Cookie Table",
+  "category": "katla",
+  "icon": "editor-table",
+  "description": "Lists the cookies Katla has scanned on your site, grouped by category.",
+  "keywords": ["cookie", "table", "gdpr", "consent"],
+  "textdomain": "katla-consent",
+  "supports": {
+    "html": false,
+    "align": ["wide", "full"],
+    "spacing": { "margin": true, "padding": true }
+  },
+  "attributes": {
+    "category": { "type": "string", "default": "" },
+    "locale": { "type": "string", "default": "" }
+  },
+  "editorScript": "katla-blocks-editor",
+  "editorStyle": "katla-blocks-editor-style",
+  "style": "katla-policy"
+}

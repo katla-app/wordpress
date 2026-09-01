@@ -1,0 +1,25 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "katla/policy",
+  "title": "Katla Policy",
+  "category": "katla",
+  "icon": "shield",
+  "description": "Renders your auto-generated cookie and privacy policy from Katla.",
+  "keywords": ["cookie", "privacy", "policy", "gdpr", "consent"],
+  "textdomain": "katla-consent",
+  "supports": {
+    "html": false,
+    "align": ["wide", "full"],
+    "spacing": { "margin": true, "padding": true },
+    "typography": { "fontSize": true, "lineHeight": true }
+  },
+  "attributes": {
+    "format": { "type": "string", "default": "full" },
+    "locale": { "type": "string", "default": "" },
+    "render": { "type": "string", "default": "server" }
+  },
+  "editorScript": "katla-blocks-editor",
+  "editorStyle": "katla-blocks-editor-style",
+  "style": "katla-policy"
+}

@@ -1,0 +1,59 @@
+/**
+ * Katla Cookie Consent — policy and cookie table output.
+ *
+ * Intentionally light-touch: inherits the theme's typography and only adds the
+ * structure a generated policy needs.
+ */
+
+.katla-policy {
+	max-inline-size: 100%;
+}
+
+.katla-policy__heading {
+	margin-block: 1.5em 0.5em;
+}
+
+.katla-policy__heading--1 {
+	margin-block-start: 0;
+}
+
+.katla-policy p {
+	line-height: 1.65;
+}
+
+.katla-policy__list {
+	padding-inline-start: 1.4em;
+	line-height: 1.65;
+}
+
+.katla-policy__table-wrap {
+	margin-block: 1em 2em;
+	overflow-x: auto;
+	-webkit-overflow-scrolling: touch;
+}
+
+.katla-policy__table {
+	inline-size: 100%;
+	min-inline-size: 520px;
+	border-collapse: collapse;
+	font-size: 0.875em;
+}
+
+.katla-policy__table th,
+.katla-policy__table td {
+	padding: 0.6em 0.75em;
+	border-block-end: 1px solid currentColor;
+	border-color: color-mix(in srgb, currentColor 15%, transparent);
+	text-align: start;
+	vertical-align: top;
+}
+
+.katla-policy__table th {
+	font-weight: 600;
+	white-space: nowrap;
+}
+
+.katla-policy__table code {
+	font-size: 0.95em;
+	word-break: break-all;
+}
