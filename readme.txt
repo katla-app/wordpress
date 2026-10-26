@@ -4,7 +4,7 @@ Tags: cookie consent, gdpr, ccpa, cookie banner, woocommerce
 Requires at least: 6.3
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 1.0.0
+Stable tag: 1.1.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -28,6 +28,7 @@ GDPR, CCPA/CPRA and DMA cookie compliance for WordPress and WooCommerce, powered
 * **Essential cookie protection.** WordPress and WooCommerce cookies that are strictly necessary — logins, carts, sessions — bypass the cookie guard so nothing breaks before consent.
 * **WooCommerce.** HPOS and cart/checkout blocks compatible. Store-critical scripts can never be gated by accident, and a cookie settings link can be added to the checkout privacy notice and My Account.
 * **Google Consent Mode v2.** Signal consent to Google tags from the plugin, or let the hosted widget do it.
+* **WP Consent API.** With the [WP Consent API](https://wordpress.org/plugins/wp-consent-api/) plugin active, every choice is reported to it, so plugins that read it, such as Site Kit by Google, follow the visitor's consent with no extra setup.
 * **WP-CLI.** `wp katla status`, `verify`, `cookies`, `policy`, `flush`.
 
 = Requirements =
@@ -72,6 +73,12 @@ Yes. Choose **Advanced / headless** mode and set the banner to **Bring your own*
 4. A generated cookie policy page.
 
 == Changelog ==
+
+= 1.1.0 =
+* WP Consent API support: consent is reported to the API on load and on every change, with the consent type set per visitor (opt-in, or opt-out under CCPA).
+* Google Consent Mode bridge: no longer declares a second default when Katla already has, sends Katla's CMP Partner Program developer ID, and denies analytics after a CCPA opt-out.
+* Consent signals are now sent before held-back scripts are released.
+* The essential cookie allowlist now works in hosted widget mode.
 
 = 1.0.0 =
 * Initial release.

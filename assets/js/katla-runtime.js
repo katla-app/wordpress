@@ -1,11 +1,12 @@
 /**
  * Katla Cookie Consent — WordPress runtime.
  *
- * Runs immediately after the Katla consent script. Four jobs:
+ * Runs immediately after the Katla consent script. Five jobs:
  *   1. Let strictly necessary cookies through the cookie guard.
  *   2. Turn consent changes into `katla:consent` events (SDK contract).
  *   3. Activate scripts and embeds that were held back server-side.
  *   4. Render the built-in banner when running headless.
+ *   5. Report consent to the WP Consent API, for plugins that read it.
  *
  * Written as ES5 so it can run in the document head without transpilation.
  */
@@ -54,7 +55,8 @@
 	 * untouched while everything else still goes through Katla's guard.
 	 */
 	function installAllowlist() {
-		if (!config.protectEssential || !(config.allowlist || []).length) {
+		// Empty unless essential cookies are protected or the WP Consent API is active.
+		if (!(config.allowlist || []).length) {
 			return;
 		}
 
@@ -63,8 +65,8 @@
 			Object.getOwnPropertyDescriptor(Document.prototype, 'cookie') ||
 			(window.HTMLDocument && Object.getOwnPropertyDescriptor(window.HTMLDocument.prototype, 'cookie'));
 
-		// No instance-level guard means Katla is in CCPA (opt-out) mode and is
-		// not intercepting writes at all — nothing to work around.
+		// No instance-level guard means the consent script never installed one, so
+		// writes are not being intercepted at all — nothing to work around.
 		if (!guarded || !guarded.set || !guarded.configurable || !native || !native.set) {
 			log('Cookie guard not present, allowlist not needed');
 			return;
@@ -156,6 +158,13 @@
 
 		log('Consent changed', data && data.type, categories);
 
+		// Signals before scripts: a held-back tag that reads consent as it starts has to
+		// find the new choice already there, not the one it was held back under.
+		if (config.googleConsentMode) {
+			pushGoogleConsent(categories);
+		}
+		syncWpConsent(categories);
+
 		activateBlocked();
 		updateGates();
 
@@ -164,10 +173,6 @@
 			detail.type = (data && data.type) || 'unknown';
 
 			window.dispatchEvent(new CustomEvent('katla:consent', { detail: detail }));
-		}
-
-		if (config.googleConsentMode) {
-			pushGoogleConsent(data, categories);
 		}
 	}
 
@@ -229,19 +234,25 @@
 		};
 	}
 
-	function pushGoogleConsent(data, categories) {
-		// A CCPA opt-out denies advertising but leaves analytics granted.
-		if (data && 'optedOut' === data.type) {
-			gtag('consent', 'update', {
-				ad_storage: 'denied',
-				ad_user_data: 'denied',
-				ad_personalization: 'denied',
-				analytics_storage: 'granted'
-			});
+	/**
+	 * A consent update, then the same state as a `consent_update` dataLayer event, as the
+	 * Katla script and SDK send them. Skipped when that state was already announced, which
+	 * the Katla script does before this runs whenever Consent Mode is on in the dashboard.
+	 *
+	 * A CCPA opt-out arrives as functional only, so it denies all four signals. It used to
+	 * leave analytics granted, telling Google to write the cookies the guard was refusing.
+	 */
+	function pushGoogleConsent(categories) {
+		var params = consentParams(categories);
+		var state = [params.ad_storage, params.ad_user_data, params.ad_personalization, params.analytics_storage].join();
+
+		if (window.__katlaGcmState === state) {
 			return;
 		}
 
-		gtag('consent', 'update', consentParams(categories));
+		gtag('consent', 'update', params);
+		window.dataLayer.push({ event: 'consent_update', consent_state: consentParams(categories) });
+		window.__katlaGcmState = state;
 	}
 
 	function initGoogleConsentMode() {
@@ -249,14 +260,90 @@
 			return;
 		}
 
-		var consent = window.KatlaConsent && window.KatlaConsent.getConsent();
+		// The hosted loader declares the default when Consent Mode is on in the Katla
+		// dashboard. A second default arriving after Google's tags have read the first can
+		// clobber it, so this one only stands in when there is none.
+		if (window.__katlaGcmDefault) {
+			log('Consent Mode default already declared by Katla');
+			return;
+		}
 
-		gtag('consent', 'default', consent ? consentParams(consent.categories || []) : {
-			analytics_storage: 'denied',
-			ad_storage: 'denied',
-			ad_user_data: 'denied',
-			ad_personalization: 'denied'
+		var consent = window.KatlaConsent && window.KatlaConsent.getConsent();
+		var params = consentParams(consent ? consent.categories || [] : []);
+
+		params.wait_for_update = 500;
+		gtag('consent', 'default', params);
+		// Katla's ID in Google's CMP Partner Program, so Google can attribute the signals.
+		gtag('set', 'developer_id.dZmFkYT', true);
+		window.__katlaGcmDefault = 1;
+	}
+
+	// -----------------------------------------------------------------
+	// WP Consent API
+	// -----------------------------------------------------------------
+
+	// Each WP Consent API category and the Katla category it follows. Katla has no
+	// separate anonymous statistics, so that one follows analytics too.
+	var WP_CONSENT_CATEGORIES = {
+		functional: 'functional',
+		preferences: 'personalization',
+		statistics: 'analytics',
+		'statistics-anonymous': 'analytics',
+		marketing: 'marketing'
+	};
+
+	function wpConsentApiReady() {
+		return Boolean(config.wpConsentApi) && 'function' === typeof window.wp_set_consent;
+	}
+
+	/**
+	 * Write the visitor's choice into the WP Consent API, one category at a time.
+	 *
+	 * Rewritten on every page load, not only on a change: the guard deletes cookies it does
+	 * not recognise when it starts, and the API's cookies are among them until a scan
+	 * classifies them. wp_set_consent() announces only a value that differs from its
+	 * cookie, so where the cookie survived, the rewrite is quiet.
+	 */
+	function syncWpConsent(categories) {
+		if (!wpConsentApiReady()) {
+			return;
+		}
+
+		Object.keys(WP_CONSENT_CATEGORIES).forEach(function (category) {
+			var katla = WP_CONSENT_CATEGORIES[category];
+
+			window.wp_set_consent(category, katla === CATEGORY_ALL || categories.indexOf(katla) !== -1 ? 'allow' : 'deny');
 		});
+	}
+
+	/**
+	 * Tell the API which regime this visitor is under and what they chose, then announce it.
+	 *
+	 * The server always says opt-in, because the regime is decided here. A CCPA visitor is
+	 * opt-out, which lets plugins that read the API run until an opt-out, as Katla's own
+	 * guard does. Before any choice only functional is written, because it never needs one;
+	 * every other category stays unset, which reads as refused under opt-in and allowed
+	 * under opt-out, the way Katla treats a visitor who has not answered.
+	 */
+	function reportToWpConsentApi() {
+		if (!wpConsentApiReady()) {
+			return;
+		}
+
+		var katla = window.KatlaConsent;
+		var regulation = katla && 'function' === typeof katla.getRegulation ? katla.getRegulation() : '';
+		var consent = katla && katla.getConsent();
+
+		window.wp_consent_type = 'ccpa' === regulation ? 'optout' : 'optin';
+
+		if (consent) {
+			syncWpConsent(consent.categories || []);
+		} else {
+			window.wp_set_consent('functional', 'allow');
+		}
+
+		document.dispatchEvent(new CustomEvent('wp_consent_type_defined'));
+		log('Reported to the WP Consent API', window.wp_consent_type, consent ? consent.categories : 'no choice yet');
 	}
 
 	// -----------------------------------------------------------------
@@ -766,31 +853,42 @@
 	}
 
 	function boot() {
-		installAllowlist();
-
 		if (!installConsentBridge()) {
-			// The consent script is a hard dependency, but a caching plugin may
-			// have deferred it. Wait for it rather than failing silently.
+			// The consent script is a hard dependency, but it may not have run yet: the
+			// hosted loader fetches it asynchronously, and a caching plugin may defer it.
+			// Wait for it rather than failing silently.
 			var attempts = 0;
 			var timer = window.setInterval(function () {
 				attempts++;
 
 				if (installConsentBridge() || attempts > 100) {
 					window.clearInterval(timer);
-					initGoogleConsentMode();
-					ready(afterReady);
+					start();
 				}
 			}, 100);
 
 			return;
 		}
 
+		start();
+	}
+
+	/**
+	 * Everything that needs the consent script to have run.
+	 *
+	 * The allowlist is here rather than at boot because it wraps the cookie guard. In widget
+	 * mode the guard arrives through the hosted loader, after this file has run, so at boot
+	 * there was nothing to wrap and the allowlist stood down without a word.
+	 */
+	function start() {
+		installAllowlist();
 		initGoogleConsentMode();
 		ready(afterReady);
 	}
 
 	function afterReady() {
 		bindDelegates();
+		reportToWpConsentApi();
 		activateBlocked();
 		updateGates();
 		renderBanner();

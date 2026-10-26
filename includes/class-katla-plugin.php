@@ -51,6 +51,7 @@ class Katla_Plugin {
 		$this->components['blocks']      = new Katla_Blocks();
 		$this->components['privacy']     = new Katla_Privacy();
 		$this->components['woocommerce'] = new Katla_WooCommerce();
+		$this->components['consent_api'] = new Katla_WP_Consent_API();
 
 		if ( is_admin() ) {
 			$this->components['admin'] = new Katla_Admin();

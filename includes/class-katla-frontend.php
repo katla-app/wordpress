@@ -180,6 +180,7 @@ class Katla_Frontend {
 			'debug'             => (bool) Katla_Settings::get( 'debug' ),
 			'events'            => (bool) Katla_Settings::get( 'consent_events' ),
 			'googleConsentMode' => (bool) Katla_Settings::get( 'google_consent_mode' ),
+			'wpConsentApi'      => Katla_WP_Consent_API::is_active(),
 			'protectEssential'  => (bool) Katla_Settings::get( 'protect_essential' ),
 			'allowlist'         => self::cookie_allowlist(),
 			'blockScripts'      => (bool) Katla_Settings::get( 'block_scripts' ),
@@ -207,8 +208,12 @@ class Katla_Frontend {
 	 * @return array<int,string>
 	 */
 	public static function cookie_allowlist(): array {
+		// The WP Consent API's cookies are the record of the visitor's choice, so they pass
+		// whether or not the site protects its other essential cookies.
+		$consent_api = Katla_WP_Consent_API::cookie_patterns();
+
 		if ( ! Katla_Settings::get( 'protect_essential' ) ) {
-			return array();
+			return $consent_api;
 		}
 
 		$allowlist = array(
@@ -226,6 +231,8 @@ class Katla_Frontend {
 			'wp-resetpass-*',
 			'devicePixelRatio',
 		);
+
+		$allowlist = array_merge( $consent_api, $allowlist );
 
 		if ( Katla_Plugin::has_woocommerce() && Katla_Settings::get( 'woo_protect_cookies' ) ) {
 			$allowlist = array_merge( $allowlist, Katla_WooCommerce::essential_cookies() );

@@ -104,6 +104,24 @@ The plugin takes ownership of `KatlaConsent.onConsentChange` as a subscriber lis
 assigning to it (as `@katla.app/sdk`'s `ConsentBridge` does) *adds* a listener instead of
 replacing the plugin's.
 
+## WP Consent API
+
+When the [WP Consent API](https://wordpress.org/plugins/wp-consent-api/) plugin is active,
+the plugin registers with it and reports every choice, so plugins that read the API (Site Kit
+by Google among them) follow the visitor's consent without any code. No setting to turn on.
+
+| Katla category | WP Consent API category |
+|---|---|
+| `functional` | `functional` |
+| `personalization` | `preferences` |
+| `analytics` | `statistics`, `statistics-anonymous` |
+| `marketing` | `marketing` |
+
+The consent type is `optin` on the server and is set per visitor in the browser: `optout`
+when Katla applies CCPA, `optin` otherwise, followed by a `wp_consent_type_defined` event.
+Nothing is written before the visitor has made a choice, and the API's `wp_consent_*`
+cookies always pass the cookie guard.
+
 In headless "bring your own" mode, anything with `data-katla-open-settings` fires a
 `katla:open-settings` event for your own UI to handle.
 

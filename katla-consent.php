@@ -3,7 +3,7 @@
  * Plugin Name:       Katla Cookie Consent
  * Plugin URI:        https://katla.app
  * Description:       GDPR, CCPA/CPRA and DMA cookie compliance for WordPress and WooCommerce. Loads the hosted Katla consent widget, supports fully headless/custom banners, blocks non-consented scripts and embeds, and renders auto-generated cookie &amp; privacy policies.
- * Version:           1.0.0
+ * Version:           1.1.0
  * Requires at least: 6.3
  * Requires PHP:      7.4
  * Author:            Katla
@@ -21,7 +21,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'KATLA_VERSION', '1.0.0' );
+define( 'KATLA_VERSION', '1.1.0' );
 define( 'KATLA_PLUGIN_FILE', __FILE__ );
 define( 'KATLA_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'KATLA_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
@@ -38,6 +38,7 @@ require_once KATLA_PLUGIN_DIR . 'includes/class-katla-shortcodes.php';
 require_once KATLA_PLUGIN_DIR . 'includes/class-katla-blocks.php';
 require_once KATLA_PLUGIN_DIR . 'includes/class-katla-privacy.php';
 require_once KATLA_PLUGIN_DIR . 'includes/class-katla-woocommerce.php';
+require_once KATLA_PLUGIN_DIR . 'includes/class-katla-wp-consent-api.php';
 require_once KATLA_PLUGIN_DIR . 'includes/class-katla-admin.php';
 require_once KATLA_PLUGIN_DIR . 'includes/class-katla-plugin.php';
 
