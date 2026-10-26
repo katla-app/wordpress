@@ -260,21 +260,32 @@
 			return;
 		}
 
-		// The hosted loader declares the default when Consent Mode is on in the Katla
-		// dashboard. A second default arriving after Google's tags have read the first can
-		// clobber it, so this one only stands in when there is none.
+		// The hosted loader declares the default, and replays a stored choice, when Consent
+		// Mode is on in the Katla dashboard. A second default arriving after Google's tags have
+		// read the first can clobber it, so this one only stands in when there is none.
 		if (window.__katlaGcmDefault) {
 			log('Consent Mode default already declared by Katla');
 			return;
 		}
 
-		var consent = window.KatlaConsent && window.KatlaConsent.getConsent();
-		var params = consentParams(consent ? consent.categories || [] : []);
+		// All four denied for every visitor, and a returning visitor's stored choice follows
+		// as an update. Google requires that order: the default must not change once someone
+		// has chosen.
+		var params = consentParams([]);
 
 		params.wait_for_update = 500;
 		gtag('consent', 'default', params);
 		// Katla's ID in Google's CMP Partner Program, so Google can attribute the signals.
 		gtag('set', 'developer_id.dZmFkYT', true);
+
+		// A plain update, without the consent_update event, as the Katla script replays a
+		// stored choice: that event is for the page where a choice is made.
+		var consent = window.KatlaConsent && window.KatlaConsent.getConsent();
+
+		if (consent) {
+			gtag('consent', 'update', consentParams(consent.categories || []));
+		}
+
 		window.__katlaGcmDefault = 1;
 	}
 

@@ -77,6 +77,7 @@ Yes. Choose **Advanced / headless** mode and set the banner to **Bring your own*
 = 1.1.0 =
 * WP Consent API support: consent is reported to the API on load and on every change, with the consent type set per visitor (opt-in, or opt-out under CCPA).
 * Google Consent Mode bridge: no longer declares a second default when Katla already has, sends Katla's CMP Partner Program developer ID, and denies analytics after a CCPA opt-out.
+* Google Consent Mode default is now denied for every visitor, with a returning visitor's stored choice sent as an update straight after it, as Google requires.
 * Consent signals are now sent before held-back scripts are released.
 * The essential cookie allowlist now works in hosted widget mode.
 
