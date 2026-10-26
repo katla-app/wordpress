@@ -18,13 +18,12 @@ add_shortcode(
 			return '<p>' . esc_html__( 'The WP Consent API plugin is not active.', 'katla-consent' ) . '</p>';
 		}
 
+		// Browser-side only. Playground's PHP runs behind a service worker, which cannot see
+		// cookies set from JavaScript, so wp_has_consent() in PHP would never see the choice
+		// here, although it does on real hosting.
 		$rows = '';
 		foreach ( array( 'functional', 'preferences', 'statistics', 'statistics-anonymous', 'marketing' ) as $category ) {
-			$rows .= sprintf(
-				'<tr><td><code>%1$s</code></td><td data-wpc-browser="%1$s">-</td><td>%2$s</td></tr>',
-				esc_html( $category ),
-				wp_has_consent( $category ) ? 'allow' : 'deny'
-			);
+			$rows .= sprintf( '<tr><td><code>%1$s</code></td><td data-wpc-browser="%1$s">-</td></tr>', esc_html( $category ) );
 		}
 
 		$signals = '';
@@ -33,9 +32,9 @@ add_shortcode(
 		}
 
 		return '<table class="wpc-status">'
-			. '<thead><tr><th>WP Consent API category</th><th>In the browser, live</th><th>On the server, at page load</th></tr></thead>'
+			. '<thead><tr><th>WP Consent API category</th><th>wp_has_consent()</th></tr></thead>'
 			. '<tbody>' . $rows . '</tbody>'
-			. '<tfoot><tr><td>Consent type</td><td id="wpc-type">-</td><td>' . esc_html( wp_get_consent_type() ) . '</td></tr></tfoot>'
+			. '<tfoot><tr><td>Consent type</td><td id="wpc-type">-</td></tr></tfoot>'
 			. '</table>'
 			. '<table class="wpc-gcm">'
 			. '<thead><tr><th>Google Consent Mode signal</th><th>Last set on this page</th></tr></thead>'
