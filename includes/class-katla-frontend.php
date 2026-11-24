@@ -19,11 +19,30 @@ class Katla_Frontend {
 	const HANDLE_POLICY  = 'katla-policy';
 
 	/**
+	 * Where in wp_head the consent script is printed: ahead of everything else.
+	 *
+	 * Google Consent Mode needs its default declared before any Google tag reads consent, and
+	 * Katla's script declares it. Printed with the other enqueued scripts, at priority 9, it
+	 * came after anything printed straight into wp_head before that: GTM4WP's container with
+	 * "Load early" on (priority 2), and other plugins and themes that do the same. Google
+	 * records that as a late default. The cookie guard wants to be first for the same reason.
+	 */
+	const HEAD_PRIORITY = -1000;
+
+	/**
+	 * Whether the runtime's configuration has been attached for this request.
+	 *
+	 * @var bool
+	 */
+	private $config_added = false;
+
+	/**
 	 * Hook into WordPress.
 	 *
 	 * @return void
 	 */
 	public function __construct() {
+		add_action( 'wp_head', array( $this, 'print_consent_scripts' ), self::HEAD_PRIORITY );
 		add_action( 'wp_head', array( $this, 'print_verification_meta' ), 0 );
 		add_action( 'wp_enqueue_scripts', array( $this, 'register_assets' ), 1 );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue' ), 2 );
@@ -112,15 +131,42 @@ class Katla_Frontend {
 	}
 
 	/**
+	 * Print the consent script and the runtime at the very start of the head.
+	 *
+	 * Printed here rather than left to wp_print_head_scripts, so nothing that writes into
+	 * wp_head earlier can put a Google tag ahead of the Consent Mode default (see
+	 * HEAD_PRIORITY). Both are marked done, so the enqueue that follows does not print them
+	 * a second time. They are plain blocking scripts: an async or deferred consent script
+	 * would let Google's tags run first.
+	 *
+	 * @return void
+	 */
+	public function print_consent_scripts(): void {
+		if ( ! self::should_load() ) {
+			return;
+		}
+
+		if ( ! wp_script_is( self::HANDLE_RUNTIME, 'registered' ) ) {
+			$this->register_assets();
+		}
+
+		$this->add_runtime_config();
+
+		// The runtime depends on the consent script, so this prints the consent script first.
+		wp_scripts()->do_items( array( self::HANDLE_RUNTIME ) );
+	}
+
+	/**
 	 * Register scripts and styles so themes can depend on or dequeue them.
+	 *
+	 * Always in the head. There used to be a footer option, and on a site with Google tags it
+	 * declared the Consent Mode default after those tags had already read consent.
 	 *
 	 * @return void
 	 */
 	public function register_assets(): void {
-		$in_footer = 'footer' === Katla_Settings::get( 'placement' );
-
-		wp_register_script( self::HANDLE_SCRIPT, Katla_Client::script_url(), array(), null, $in_footer ); // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion -- versioned by the CDN.
-		wp_register_script( self::HANDLE_RUNTIME, KATLA_PLUGIN_URL . 'assets/js/katla-runtime.js', array( self::HANDLE_SCRIPT ), KATLA_VERSION, $in_footer );
+		wp_register_script( self::HANDLE_SCRIPT, Katla_Client::script_url(), array(), null, false ); // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion -- versioned by the CDN.
+		wp_register_script( self::HANDLE_RUNTIME, KATLA_PLUGIN_URL . 'assets/js/katla-runtime.js', array( self::HANDLE_SCRIPT ), KATLA_VERSION, false );
 		wp_register_style( self::HANDLE_STYLE, KATLA_PLUGIN_URL . 'assets/css/katla.css', array(), KATLA_VERSION );
 		wp_register_style( self::HANDLE_BANNER, KATLA_PLUGIN_URL . 'assets/css/katla-banner.css', array( self::HANDLE_STYLE ), KATLA_VERSION );
 		wp_register_style( self::HANDLE_POLICY, KATLA_PLUGIN_URL . 'assets/css/katla-policy.css', array(), KATLA_VERSION );
@@ -136,9 +182,31 @@ class Katla_Frontend {
 			return;
 		}
 
+		// Normally already printed at the top of the head, in which case these do nothing more.
+		// Still enqueued, so the scripts load even where a theme prints the head without
+		// wp_head's early hooks, and so themes can depend on the handles.
 		wp_enqueue_script( self::HANDLE_SCRIPT );
 		wp_enqueue_script( self::HANDLE_RUNTIME );
 		wp_enqueue_style( self::HANDLE_STYLE );
+
+		$this->add_runtime_config();
+
+		if ( self::uses_builtin_banner() ) {
+			wp_enqueue_style( self::HANDLE_BANNER );
+		}
+
+		wp_add_inline_style( self::HANDLE_STYLE, self::inline_banner_css() );
+	}
+
+	/**
+	 * Attach the runtime's configuration ahead of it, once per request.
+	 *
+	 * @return void
+	 */
+	private function add_runtime_config(): void {
+		if ( $this->config_added ) {
+			return;
+		}
 
 		wp_add_inline_script(
 			self::HANDLE_RUNTIME,
@@ -146,11 +214,7 @@ class Katla_Frontend {
 			'before'
 		);
 
-		if ( self::uses_builtin_banner() ) {
-			wp_enqueue_style( self::HANDLE_BANNER );
-		}
-
-		wp_add_inline_style( self::HANDLE_STYLE, self::inline_banner_css() );
+		$this->config_added = true;
 	}
 
 	/**

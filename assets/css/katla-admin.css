@@ -43,3 +43,115 @@
 .katla-admin .katla-error {
 	color: #b32d2e;
 }
+
+/* Guided setup. */
+
+.katla-admin .katla-setup__intro {
+	max-inline-size: 680px;
+	font-size: 14px;
+}
+
+.katla-admin .katla-setup {
+	max-inline-size: 760px;
+	margin: 16px 0 0;
+	padding: 0;
+	list-style: none;
+}
+
+.katla-admin .katla-setup__step {
+	display: flex;
+	gap: 14px;
+	margin: 0 0 12px;
+	padding: 16px 18px;
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-inline-start-width: 4px;
+	border-radius: 4px;
+}
+
+.katla-admin .katla-setup__step.is-done {
+	border-inline-start-color: #00a32a;
+}
+
+.katla-admin .katla-setup__step.is-warn {
+	border-inline-start-color: #dba617;
+}
+
+.katla-admin .katla-setup__step.is-todo {
+	border-inline-start-color: #2271b1;
+}
+
+.katla-admin .katla-setup__marker {
+	flex: 0 0 auto;
+	inline-size: 24px;
+	block-size: 24px;
+	font-size: 24px;
+	line-height: 24px;
+	text-align: center;
+	font-weight: 600;
+}
+
+.katla-admin .katla-setup__step.is-todo .katla-setup__marker {
+	font-size: 13px;
+	color: #fff;
+	background: #2271b1;
+	border-radius: 50%;
+}
+
+.katla-admin .katla-setup__step.is-done .katla-setup__marker {
+	color: #00a32a;
+}
+
+.katla-admin .katla-setup__step.is-warn .katla-setup__marker {
+	color: #dba617;
+}
+
+.katla-admin .katla-setup__step.is-optional .katla-setup__marker {
+	color: #646970;
+}
+
+.katla-admin .katla-setup__body {
+	flex: 1 1 auto;
+	min-inline-size: 0;
+}
+
+.katla-admin .katla-setup__body h3 {
+	margin: 0 0 6px;
+	font-size: 15px;
+}
+
+.katla-admin .katla-setup__body p {
+	margin: 0 0 10px;
+}
+
+.katla-admin .katla-setup__status {
+	margin-inline-start: 6px;
+	font-size: 12px;
+	font-weight: 400;
+	color: #646970;
+}
+
+.katla-admin .katla-setup__form {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	align-items: center;
+	margin: 0 0 6px;
+}
+
+.katla-admin .katla-setup__more summary {
+	cursor: pointer;
+	color: #2271b1;
+	margin-block-end: 8px;
+}
+
+.katla-admin .katla-setup__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	align-items: center;
+}
+
+.katla-admin .katla-setup__actions .katla-setup__form {
+	margin: 0;
+}

@@ -228,9 +228,10 @@ the Tools tab, via `wp katla flush`, and on deactivation.
 
 ## Notes on compliance
 
-* **Load order matters.** The cookie guard must run before any script that sets cookies.
-  Keep the placement on *Head* and exclude `dist.katla.app` from JS deferral or combination
-  in optimisation plugins.
+* **Load order matters.** The cookie guard must run before any script that sets cookies, and
+  the Google Consent Mode default before any Google tag reads consent. The plugin prints the
+  Katla script at the very start of `<head>` for both reasons. Exclude `dist.katla.app` from
+  JS deferral, delay or combination in optimisation plugins, which would move it back.
 * **DMA equal prominence.** In the built-in banner, "Reject all" and "Accept all" use
   identical size, padding and weight so neither is the nudged choice.
 * **Hide from roles** is a development convenience. Users in those roles are not shown a

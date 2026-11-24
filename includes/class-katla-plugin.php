@@ -43,7 +43,6 @@ class Katla_Plugin {
 	 * Build the plugin.
 	 */
 	private function __construct() {
-		add_action( 'init', array( $this, 'load_textdomain' ) );
 
 		$this->components['frontend']    = new Katla_Frontend();
 		$this->components['blocker']     = new Katla_Script_Blocker();
@@ -66,15 +65,6 @@ class Katla_Plugin {
 	 */
 	public function get( string $name ) {
 		return $this->components[ $name ] ?? null;
-	}
-
-	/**
-	 * Load translations.
-	 *
-	 * @return void
-	 */
-	public function load_textdomain(): void {
-		load_plugin_textdomain( 'katla-consent', false, dirname( KATLA_PLUGIN_BASENAME ) . '/languages' );
 	}
 
 	/**

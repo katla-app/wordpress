@@ -16,6 +16,16 @@ class Katla_Admin {
 	const NOTICE = 'katla_admin_notice';
 
 	/**
+	 * The Katla dashboard, where the site's banner and Consent Mode settings live.
+	 */
+	const DASHBOARD_URL = 'https://katla.app';
+
+	/**
+	 * Katla's free single-page Consent Mode checker.
+	 */
+	const CHECKER_URL = 'https://katla.app/tools/consent-mode-checker';
+
+	/**
 	 * Field keys rendered on the current screen.
 	 *
 	 * @var array<int,string>
@@ -30,11 +40,13 @@ class Katla_Admin {
 		add_action( 'admin_init', array( $this, 'register_settings' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue' ) );
 		add_action( 'admin_notices', array( $this, 'print_notices' ) );
+		add_action( 'admin_notices', array( $this, 'print_setup_notice' ) );
 		add_filter( 'plugin_action_links_' . KATLA_PLUGIN_BASENAME, array( $this, 'action_links' ) );
 
 		add_action( 'admin_post_katla_flush_cache', array( $this, 'handle_flush_cache' ) );
 		add_action( 'admin_post_katla_test_connection', array( $this, 'handle_test_connection' ) );
 		add_action( 'admin_post_katla_create_policy_page', array( $this, 'handle_create_policy_page' ) );
+		add_action( 'admin_post_katla_setup_connect', array( $this, 'handle_setup_connect' ) );
 	}
 
 	/**
@@ -162,12 +174,51 @@ class Katla_Admin {
 	}
 
 	/**
+	 * Point to the setup on the Dashboard and Plugins screens until the plugin is connected.
+	 *
+	 * Only there, and only for people who can do the setup: an unconnected plugin shows no
+	 * banner at all, which is worth saying where an administrator looks after installing it,
+	 * and not worth repeating on every screen.
+	 *
+	 * @return void
+	 */
+	public function print_setup_notice(): void {
+		if ( Katla_Settings::is_configured() || ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+
+		if ( ! $screen || ! in_array( $screen->id, array( 'dashboard', 'plugins' ), true ) ) {
+			return;
+		}
+
+		printf(
+			'<div class="notice notice-info"><p>%1$s</p><p><a class="button button-primary" href="%2$s">%3$s</a></p></div>',
+			esc_html__( 'Katla Cookie Consent is installed but not connected to Katla yet, so visitors see no consent banner.', 'katla-consent' ),
+			esc_url( self::tab_url( 'setup' ) ),
+			esc_html__( 'Set up Katla', 'katla-consent' )
+		);
+	}
+
+	/**
+	 * The settings screen, on one of its tabs.
+	 *
+	 * @param string $tab Tab slug.
+	 * @return string
+	 */
+	private static function tab_url( string $tab ): string {
+		return admin_url( 'options-general.php?page=' . self::PAGE . '&tab=' . $tab );
+	}
+
+	/**
 	 * The tabs available on the settings screen.
 	 *
 	 * @return array<string,string>
 	 */
 	private function tabs(): array {
 		$tabs = array(
+			'setup'    => __( 'Setup', 'katla-consent' ),
 			'general'  => __( 'General', 'katla-consent' ),
 			'blocking' => __( 'Blocking', 'katla-consent' ),
 			'policies' => __( 'Policies', 'katla-consent' ),
@@ -193,8 +244,10 @@ class Katla_Admin {
 		}
 
 		$tabs = $this->tabs();
-		$tab  = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'general'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only navigation.
-		$tab  = isset( $tabs[ $tab ] ) ? $tab : 'general';
+		// Setup until the plugin is connected, so the first visit after installing starts there.
+		$home = Katla_Settings::is_configured() ? 'general' : 'setup';
+		$tab  = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : $home; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only navigation.
+		$tab  = isset( $tabs[ $tab ] ) ? $tab : $home;
 
 		$this->rendered = array();
 
@@ -213,6 +266,13 @@ class Katla_Admin {
 			);
 		}
 		echo '</h2>';
+
+		if ( 'setup' === $tab ) {
+			$this->render_setup_tab();
+			echo '</div>';
+
+			return;
+		}
 
 		if ( 'tools' === $tab ) {
 			$this->render_tools_tab();
@@ -262,7 +322,7 @@ class Katla_Admin {
 		if ( ! Katla_Settings::is_configured() ) {
 			printf(
 				'<div class="notice notice-warning"><p>%s</p></div>',
-				esc_html__( 'Add your Katla Site ID below to start collecting consent. You can find it in the Widget section of your site settings at katla.app.', 'katla-consent' )
+				esc_html__( 'Katla is not connected yet, so visitors see no consent banner. The Setup tab walks you through connecting it.', 'katla-consent' )
 			);
 
 			return;
@@ -291,6 +351,329 @@ class Katla_Admin {
 				)
 			)
 		);
+	}
+
+	// -------------------------------------------------------------------
+	// Setup.
+	// -------------------------------------------------------------------
+
+	/**
+	 * The guided setup: what it takes for the banner to meet Google's requirements, in order.
+	 *
+	 * Each step reads its state from the site or from Katla rather than asking to be ticked
+	 * off, so it can be opened at any time to see what is still missing. Google's CMP Partner
+	 * Program asks that an integration's setup end in a banner that meets its technical
+	 * requirements: Consent Mode signals, Google's banner text and a default that arrives
+	 * before any Google tag.
+	 *
+	 * @return void
+	 */
+	private function render_setup_tab(): void {
+		$configured = Katla_Settings::is_configured();
+		$manifest   = $configured ? Katla_Client::get_manifest() : null;
+		$connected  = $configured && is_array( $manifest );
+
+		echo '<p class="katla-setup__intro">' . esc_html__( 'Five steps to a consent banner that blocks cookies until visitors choose and tells Google what they chose. Each step checks itself, so come back to this tab whenever you change something.', 'katla-consent' ) . '</p>';
+		echo '<ol class="katla-setup">';
+
+		$this->render_setup_connect( $configured, $manifest );
+		$this->render_setup_consent_mode( $connected, $connected ? $manifest : array() );
+		$this->render_setup_load_order();
+		$this->render_setup_wp_consent_api();
+		$this->render_setup_check( $connected );
+
+		echo '</ol>';
+	}
+
+	/**
+	 * Open one setup step.
+	 *
+	 * @param int    $number Step number.
+	 * @param string $state  `done`, `todo`, `warn` or `optional`.
+	 * @param string $title  Step title.
+	 * @return void
+	 */
+	private function open_setup_step( int $number, string $state, string $title ): void {
+		$status = array(
+			'done'     => __( 'Done', 'katla-consent' ),
+			'todo'     => __( 'To do', 'katla-consent' ),
+			'warn'     => __( 'Needs attention', 'katla-consent' ),
+			'optional' => __( 'Optional', 'katla-consent' ),
+		);
+		$icons  = array(
+			'done'     => 'dashicons-yes-alt',
+			'warn'     => 'dashicons-warning',
+			'optional' => 'dashicons-info-outline',
+		);
+
+		printf( '<li class="katla-setup__step is-%s">', esc_attr( $state ) );
+
+		if ( isset( $icons[ $state ] ) ) {
+			printf( '<span class="katla-setup__marker dashicons %s" aria-hidden="true"></span>', esc_attr( $icons[ $state ] ) );
+		} else {
+			printf( '<span class="katla-setup__marker" aria-hidden="true">%d</span>', absint( $number ) );
+		}
+
+		printf(
+			'<div class="katla-setup__body"><h3>%1$s <span class="katla-setup__status">%2$s</span></h3>',
+			esc_html( $title ),
+			esc_html( $status[ $state ] ?? '' )
+		);
+	}
+
+	/**
+	 * Close a setup step.
+	 *
+	 * @return void
+	 */
+	private function close_setup_step(): void {
+		echo '</div></li>';
+	}
+
+	/**
+	 * The setup form: a Site ID to save, or only a fresh look at Katla's answer.
+	 *
+	 * @param string $label         Button label.
+	 * @param bool   $with_site_id  Whether to ask for the Site ID.
+	 * @param bool   $primary       Whether the button is the step's main action.
+	 * @return void
+	 */
+	private function setup_form( string $label, bool $with_site_id, bool $primary = true ): void {
+		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" class="katla-setup__form">';
+		wp_nonce_field( 'katla_setup_connect' );
+		echo '<input type="hidden" name="action" value="katla_setup_connect" />';
+
+		if ( $with_site_id ) {
+			printf(
+				'<label for="katla-setup-site-id" class="screen-reader-text">%1$s</label><input type="text" id="katla-setup-site-id" name="site_id" class="regular-text code" value="%2$s" placeholder="00000000-0000-0000-0000-000000000000" autocomplete="off" spellcheck="false" />',
+				esc_html__( 'Site ID', 'katla-consent' ),
+				esc_attr( (string) Katla_Settings::get( 'site_id' ) )
+			);
+		}
+
+		printf(
+			'<button type="submit" class="button%1$s">%2$s</button></form>',
+			$primary ? ' button-primary' : '',
+			esc_html( $label )
+		);
+	}
+
+	/**
+	 * Step 1: connect the plugin to the site in Katla.
+	 *
+	 * @param bool                       $configured Whether a Site ID is saved.
+	 * @param array<string,mixed>|WP_Error|null $manifest Katla's manifest for it.
+	 * @return void
+	 */
+	private function render_setup_connect( bool $configured, $manifest ): void {
+		$title = __( 'Connect your Katla site', 'katla-consent' );
+
+		if ( ! $configured ) {
+			$this->open_setup_step( 1, 'todo', $title );
+			printf(
+				'<p>%1$s</p><p>%2$s <a href="%3$s" target="_blank" rel="noopener noreferrer">%4$s</a></p>',
+				esc_html__( 'Paste the Site ID from the Widget section of your site settings in Katla.', 'katla-consent' ),
+				esc_html__( 'No Katla account yet? Create one and add this site\'s domain. Katla scans the site and classifies its cookies, which the banner needs.', 'katla-consent' ),
+				esc_url( self::DASHBOARD_URL ),
+				esc_html__( 'Open Katla', 'katla-consent' )
+			);
+			$this->setup_form( __( 'Connect', 'katla-consent' ), true );
+			$this->close_setup_step();
+
+			return;
+		}
+
+		if ( is_wp_error( $manifest ) ) {
+			$this->open_setup_step( 1, 'warn', $title );
+			printf(
+				'<p>%s</p>',
+				esc_html(
+					sprintf(
+						/* translators: %s: error message. */
+						__( 'Katla did not answer for this Site ID: %s. Check that it is copied in full, from the site you mean.', 'katla-consent' ),
+						$manifest->get_error_message()
+					)
+				)
+			);
+			$this->setup_form( __( 'Save and check again', 'katla-consent' ), true );
+			$this->close_setup_step();
+
+			return;
+		}
+
+		$katla_domain = self::bare_host( (string) ( $manifest['site'] ?? '' ) );
+		$this_domain  = self::bare_host( (string) wp_parse_url( home_url(), PHP_URL_HOST ) );
+		$matches      = '' === $katla_domain || $katla_domain === $this_domain;
+
+		$this->open_setup_step( 1, $matches ? 'done' : 'warn', $title );
+		printf(
+			'<p>%s</p>',
+			esc_html(
+				sprintf(
+					/* translators: %s: the domain the Site ID belongs to in Katla. */
+					__( 'Connected to %s in Katla.', 'katla-consent' ),
+					$katla_domain
+				)
+			)
+		);
+
+		if ( ! $matches ) {
+			printf(
+				'<p>%s</p>',
+				esc_html(
+					sprintf(
+						/* translators: 1: the domain in Katla, 2: this site's domain. */
+						__( 'This Site ID belongs to %1$s, but this WordPress site is %2$s. That is fine on a staging copy. On the live site, use the Site ID of its own domain, or consent is recorded against the wrong one.', 'katla-consent' ),
+						$katla_domain,
+						$this_domain
+					)
+				)
+			);
+		}
+
+		echo '<details class="katla-setup__more"><summary>' . esc_html__( 'Use a different Site ID', 'katla-consent' ) . '</summary>';
+		$this->setup_form( __( 'Save and check', 'katla-consent' ), true, false );
+		echo '</details>';
+		$this->close_setup_step();
+	}
+
+	/**
+	 * Step 2: Consent Mode and Google's banner text, both switched on in Katla.
+	 *
+	 * Read from the manifest, which says whether either is on. A Katla that predates those
+	 * fields gets the instructions without a verdict, rather than a wrong one.
+	 *
+	 * @param bool                $connected Whether Katla answered for the Site ID.
+	 * @param array<string,mixed> $manifest  Katla's manifest.
+	 * @return void
+	 */
+	private function render_setup_consent_mode( bool $connected, array $manifest ): void {
+		$title = __( 'Turn on Google Consent Mode and Google\'s banner text', 'katla-consent' );
+		$where = __( 'Both are under Site settings > Google Consent Mode in Katla. Google\'s banner text adds the sentence and the link to how Google uses data that Google asks every consent banner to show.', 'katla-consent' );
+
+		if ( ! $connected ) {
+			$this->open_setup_step( 2, 'todo', $title );
+			echo '<p>' . esc_html__( 'Connect your Katla site first.', 'katla-consent' ) . '</p>';
+			$this->close_setup_step();
+
+			return;
+		}
+
+		$status = isset( $manifest['consentMode'] ) && is_array( $manifest['consentMode'] ) ? $manifest['consentMode'] : null;
+
+		if ( null === $status ) {
+			$this->open_setup_step( 2, 'todo', $title );
+			echo '<p>' . esc_html( $where ) . '</p>';
+		} elseif ( ! empty( $status['enabled'] ) && ! empty( $status['googleNotice'] ) ) {
+			$this->open_setup_step( 2, 'done', $title );
+			echo '<p>' . esc_html__( 'Consent Mode is on, so Google tags are told what each visitor chose, and the banner shows Google\'s banner text with the link to how Google uses data.', 'katla-consent' ) . '</p>';
+		} elseif ( ! empty( $status['enabled'] ) ) {
+			$this->open_setup_step( 2, 'warn', $title );
+			echo '<p>' . esc_html__( 'Consent Mode is on, but Google\'s banner text is off. Turn it on too: Google asks for it on every banner that sends Consent Mode signals.', 'katla-consent' ) . '</p>';
+			echo '<p>' . esc_html( $where ) . '</p>';
+		} else {
+			$this->open_setup_step( 2, 'warn', $title );
+			echo '<p>' . esc_html__( 'Consent Mode is off for this site in Katla, so Google Analytics, Google Ads and Tag Manager get no consent signals. Skip this only if the site uses no Google tags.', 'katla-consent' ) . '</p>';
+			echo '<p>' . esc_html( $where ) . '</p>';
+		}
+
+		if ( 'headless' === Katla_Settings::get( 'mode' ) && 'builtin' === Katla_Settings::get( 'headless_banner' ) ) {
+			echo '<p>' . esc_html__( 'This site uses the plugin\'s own banner (Advanced / headless on the General tab), which does not show Google\'s banner text. Switch to the hosted widget to meet Google\'s banner requirements.', 'katla-consent' ) . '</p>';
+		}
+
+		echo '<div class="katla-setup__actions">';
+		printf(
+			'<a class="button" href="%1$s" target="_blank" rel="noopener noreferrer">%2$s</a>',
+			esc_url( self::DASHBOARD_URL ),
+			esc_html__( 'Open Katla', 'katla-consent' )
+		);
+		$this->setup_form( __( 'Check again', 'katla-consent' ), false, false );
+		echo '</div>';
+		$this->close_setup_step();
+	}
+
+	/**
+	 * Step 3: the Katla script first in the head. Always true; said so, with the one way to break it.
+	 *
+	 * @return void
+	 */
+	private function render_setup_load_order(): void {
+		$this->open_setup_step( 3, 'done', __( 'Katla loads before Google tags', 'katla-consent' ) );
+		echo '<p>' . esc_html__( 'The plugin prints the Katla script first in the page head, so the Consent Mode default is in place before Google Analytics, Google Ads or Tag Manager read it, whichever plugin or theme adds them.', 'katla-consent' ) . '</p>';
+		echo '<p>' . esc_html__( 'If a caching or optimisation plugin defers, delays or combines JavaScript, exclude dist.katla.app from it. Moved later, the script cannot set the default in time.', 'katla-consent' ) . '</p>';
+		$this->close_setup_step();
+	}
+
+	/**
+	 * Step 4: the WP Consent API, which Site Kit by Google reads.
+	 *
+	 * @return void
+	 */
+	private function render_setup_wp_consent_api(): void {
+		$title    = __( 'Share the choice with other plugins', 'katla-consent' );
+		$site_kit = defined( 'GOOGLESITEKIT_VERSION' );
+
+		if ( Katla_WP_Consent_API::is_active() ) {
+			$this->open_setup_step( 4, 'done', $title );
+			echo '<p>' . esc_html__( 'The WP Consent API is active. Katla reports every choice to it, so plugins that read it, such as Site Kit by Google, follow the visitor\'s consent.', 'katla-consent' ) . '</p>';
+			$this->close_setup_step();
+
+			return;
+		}
+
+		$this->open_setup_step( 4, $site_kit ? 'warn' : 'optional', $title );
+		echo '<p>' . esc_html(
+			$site_kit
+				? __( 'Site Kit by Google is active. Install the WP Consent API plugin so Site Kit follows the visitor\'s choice. Katla reports to it with no further setup.', 'katla-consent' )
+				: __( 'If you use plugins that read the WP Consent API, such as Site Kit by Google, install the WP Consent API plugin. Katla reports every choice to it with no further setup.', 'katla-consent' )
+		) . '</p>';
+
+		if ( current_user_can( 'install_plugins' ) ) {
+			printf(
+				'<p><a class="button" href="%1$s">%2$s</a></p>',
+				esc_url( admin_url( 'plugin-install.php?s=wp-consent-api&tab=search&type=term' ) ),
+				esc_html__( 'Find WP Consent API', 'katla-consent' )
+			);
+		}
+
+		$this->close_setup_step();
+	}
+
+	/**
+	 * Step 5: see it working.
+	 *
+	 * @param bool $connected Whether Katla answered for the Site ID.
+	 * @return void
+	 */
+	private function render_setup_check( bool $connected ): void {
+		$this->open_setup_step( 5, $connected ? 'optional' : 'todo', __( 'Check it works', 'katla-consent' ) );
+
+		if ( ! $connected ) {
+			echo '<p>' . esc_html__( 'Connect your Katla site first.', 'katla-consent' ) . '</p>';
+			$this->close_setup_step();
+
+			return;
+		}
+
+		echo '<p>' . esc_html__( 'Open your site in a private window: the banner shows on the first visit. Katla also checks Consent Mode on your landing pages on its own and emails you when it finds a gap. The report is under Google Consent Mode for your site in Katla.', 'katla-consent' ) . '</p>';
+		printf(
+			'<p><a class="button" href="%1$s" target="_blank" rel="noopener noreferrer">%2$s</a> <a class="button" href="%3$s" target="_blank" rel="noopener noreferrer">%4$s</a></p>',
+			esc_url( home_url( '/' ) ),
+			esc_html__( 'View your site', 'katla-consent' ),
+			esc_url( self::CHECKER_URL ),
+			esc_html__( 'Check a page for Consent Mode', 'katla-consent' )
+		);
+		$this->close_setup_step();
+	}
+
+	/**
+	 * A host without `www.`, lower case, for comparing domains.
+	 *
+	 * @param string $host Host name.
+	 * @return string
+	 */
+	private static function bare_host( string $host ): string {
+		return preg_replace( '/^www\./', '', strtolower( trim( $host ) ) );
 	}
 
 	// -------------------------------------------------------------------
@@ -339,15 +722,6 @@ class Katla_Admin {
 				'custom'  => __( 'Bring your own banner — the plugin only loads the guard and fires katla:consent events.', 'katla-consent' ),
 			),
 			__( 'Only applies in headless mode.', 'katla-consent' )
-		);
-
-		$this->radio_field(
-			'placement',
-			__( 'Script placement', 'katla-consent' ),
-			array(
-				'head'   => __( 'Head — recommended. The cookie guard must run before other scripts can set cookies.', 'katla-consent' ),
-				'footer' => __( 'Footer — only for debugging or when a caching plugin requires it.', 'katla-consent' ),
-			)
 		);
 
 		$this->radio_field(
@@ -1028,13 +1402,65 @@ class Katla_Admin {
 	}
 
 	/**
-	 * Redirect back to the Tools tab.
+	 * Redirect back to a tab, the Tools tab unless told otherwise.
+	 *
+	 * @param string $tab Tab slug.
+	 * @return void
+	 */
+	private function redirect_back( string $tab = 'tools' ): void {
+		wp_safe_redirect( self::tab_url( $tab ) );
+		exit;
+	}
+
+	/**
+	 * Save the Site ID from the setup screen, or just check again, and read Katla's answer.
+	 *
+	 * Always fetches the manifest fresh: it carries whether Consent Mode and Google's banner
+	 * text are on, which is what someone pressing Check again has just gone and changed.
 	 *
 	 * @return void
 	 */
-	private function redirect_back(): void {
-		wp_safe_redirect( admin_url( 'options-general.php?page=' . self::PAGE . '&tab=tools' ) );
-		exit;
+	public function handle_setup_connect(): void {
+		$this->authorize( 'katla_setup_connect' );
+
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- checked in authorize().
+		if ( isset( $_POST['site_id'] ) ) {
+			$site_id = strtolower( trim( sanitize_text_field( wp_unslash( $_POST['site_id'] ) ) ) );
+
+			if ( ! Katla_Settings::is_uuid( $site_id ) ) {
+				self::notice(
+					esc_html__( 'That is not a Site ID. Copy it from the Widget section of your site settings in Katla: it looks like 00000000-0000-0000-0000-000000000000.', 'katla-consent' ),
+					'error'
+				);
+				$this->redirect_back( 'setup' );
+			}
+
+			Katla_Settings::update( array( 'site_id' => $site_id ) );
+		}
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
+
+		$manifest = Katla_Client::get_json( '/manifest.json', array(), 'manifest', true );
+
+		if ( is_wp_error( $manifest ) ) {
+			self::notice(
+				sprintf(
+					/* translators: %s: error message. */
+					__( 'Katla did not answer for this Site ID: %s', 'katla-consent' ),
+					esc_html( $manifest->get_error_message() )
+				),
+				'error'
+			);
+		} else {
+			self::notice(
+				sprintf(
+					/* translators: %s: the domain the Site ID belongs to in Katla. */
+					__( 'Connected to Katla as %s.', 'katla-consent' ),
+					'<strong>' . esc_html( (string) ( $manifest['site'] ?? '' ) ) . '</strong>'
+				)
+			);
+		}
+
+		$this->redirect_back( 'setup' );
 	}
 
 	/**

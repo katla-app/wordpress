@@ -37,7 +37,6 @@ class Katla_Settings {
 			'enabled'                  => true,
 			'mode'                     => 'widget', // widget | headless.
 			'headless_banner'          => 'builtin', // builtin | custom.
-			'placement'                => 'head', // head | footer.
 			'locale_mode'              => 'site', // site | custom | browser.
 			'locale'                   => '',
 			'theme'                    => '', // '' = use dashboard setting | light | dark.
@@ -187,6 +186,9 @@ class Katla_Settings {
 		}
 		$out = array_merge( $defaults, $existing );
 
+		// Removed in 1.2.0: the consent script always loads first in the head now.
+		unset( $out['placement'] );
+
 		if ( ! is_array( $input ) ) {
 			return $out;
 		}
@@ -239,7 +241,6 @@ class Katla_Settings {
 		$enums = array(
 			'mode'                     => array( 'widget', 'headless' ),
 			'headless_banner'          => array( 'builtin', 'custom' ),
-			'placement'                => array( 'head', 'footer' ),
 			'locale_mode'              => array( 'site', 'custom', 'browser' ),
 			'theme'                    => array( '', 'light', 'dark' ),
 			'policy_render'            => array( 'server', 'client' ),
