@@ -1,0 +1,199 @@
+#!/usr/bin/env bash
+#
+# Ship the plugin to the wordpress.org directory.
+#
+# The SVN working copy is a mirror of this repo, kept in ../wordpress-svn (checked out on
+# first use, or set KATLA_SVN_DIR). Every run resets it first, so never edit it by hand.
+# svn takes the password from the macOS Keychain, where it saved it on the first commit.
+
+set -euo pipefail
+
+usage() {
+	cat <<'EOF'
+Usage: bin/release [assets] [--dry-run]
+
+  bin/release            Release the version in katla-consent.php. Syncs this repo into
+                         SVN trunk/, copies it to tags/<version>, syncs .wordpress-org/
+                         into assets/, commits after you confirm, then tags v<version>
+                         in git.
+  bin/release assets     Only sync .wordpress-org/ (icon, banner, screenshots) into
+                         assets/. This changes the directory page, not the plugin.
+
+  --dry-run              Stop before the commit and show what would change.
+
+Before a release: bump Version and KATLA_VERSION in katla-consent.php and Stable tag in
+readme.txt, add a changelog entry, commit and push.
+EOF
+}
+
+SLUG=katla-consent
+SVN_URL="https://plugins.svn.wordpress.org/$SLUG"
+SVN_USER="${SVN_USERNAME:-katlaapp}"
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+SVN_DIR="${KATLA_SVN_DIR:-$(dirname "$ROOT")/wordpress-svn}"
+
+# Never shipped in the plugin: development files, this script, and the directory assets,
+# which go to assets/ instead.
+RSYNC_EXCLUDES=(
+	--exclude /.git
+	--exclude /.github
+	--exclude /.gitignore
+	--exclude /.gitattributes
+	--exclude /.distignore
+	--exclude /.wordpress-org
+	--exclude /bin
+	--exclude /node_modules
+	--exclude .svn
+	--exclude .DS_Store
+)
+
+MODE=release
+DRY_RUN=0
+for arg in "$@"; do
+	case "$arg" in
+		assets) MODE=assets ;;
+		--dry-run) DRY_RUN=1 ;;
+		-h | --help) usage; exit 0 ;;
+		*) usage >&2; exit 64 ;;
+	esac
+done
+
+die() { echo "Error: $*" >&2; exit 1; }
+step() { echo "==> $*"; }
+
+command -v svn >/dev/null || die "svn is not installed. Run: brew install subversion"
+command -v rsync >/dev/null || die "rsync is not installed."
+
+cd "$ROOT"
+
+# ---------------------------------------------------------------------------------------
+# Checks: the version numbers agree, and the code being released is committed and pushed.
+# ---------------------------------------------------------------------------------------
+
+if [ "$MODE" = release ]; then
+	VERSION="$(awk -F: '/^[ *]*Version:/ { gsub(/[[:space:]]/, "", $2); print $2; exit }' katla-consent.php)"
+	CONSTANT="$(sed -n "s/.*define( *'KATLA_VERSION', *'\([^']*\)'.*/\1/p" katla-consent.php)"
+	STABLE="$(awk -F: '/^Stable tag:/ { gsub(/[[:space:]]/, "", $2); print $2; exit }' readme.txt)"
+
+	[ -n "$VERSION" ] || die "katla-consent.php has no Version: header."
+	[ "$CONSTANT" = "$VERSION" ] || die "KATLA_VERSION is '$CONSTANT' but the plugin header says $VERSION."
+	[ "$STABLE" = "$VERSION" ] || die "readme.txt says Stable tag: $STABLE but the plugin header says $VERSION."
+	grep -qF "= $VERSION =" readme.txt || die "readme.txt has no changelog entry for $VERSION."
+
+	if svn ls "$SVN_URL/tags/$VERSION" >/dev/null 2>&1; then
+		die "$VERSION is already on wordpress.org. Bump the version first."
+	fi
+
+	problems=()
+	[ -z "$(git status --porcelain)" ] || problems+=("The git working tree has uncommitted changes. Commit them, so the release is a commit.")
+	git fetch --quiet origin
+	git merge-base --is-ancestor HEAD origin/main || problems+=("HEAD is not on origin/main. Push it, so GitHub has the code you release.")
+
+	if [ "${#problems[@]}" -gt 0 ]; then
+		if [ "$DRY_RUN" = 1 ]; then
+			for p in "${problems[@]}"; do echo "Warning: $p"; done
+		else
+			for p in "${problems[@]}"; do echo "Error: $p" >&2; done
+			exit 1
+		fi
+	fi
+elif [ -n "$(git status --porcelain -- .wordpress-org)" ]; then
+	echo "Warning: .wordpress-org/ has uncommitted changes. They will be published anyway."
+fi
+
+# ---------------------------------------------------------------------------------------
+# Mirror the repo into the SVN working copy.
+# ---------------------------------------------------------------------------------------
+
+if [ ! -d "$SVN_DIR/.svn" ]; then
+	step "Checking out $SVN_URL into $SVN_DIR"
+	svn checkout --quiet "$SVN_URL" "$SVN_DIR"
+fi
+
+cd "$SVN_DIR"
+
+step "Resetting and updating the SVN working copy"
+svn revert --quiet --recursive .
+svn cleanup --quiet --remove-unversioned .
+svn update --quiet
+
+if [ "$MODE" = release ]; then
+	step "Syncing the plugin into trunk/"
+	rsync -a --delete --checksum "${RSYNC_EXCLUDES[@]}" "$ROOT/" trunk/
+fi
+
+# The Playground blueprint stays on GitHub: it installs the plugin from main for the
+# WP Consent API demo, which is not what a wordpress.org Live Preview should show.
+step "Syncing .wordpress-org/ into assets/"
+mkdir -p assets
+rsync -a --delete --checksum --exclude .svn --exclude .DS_Store --exclude /blueprints \
+	"$ROOT/.wordpress-org/" assets/
+
+# New files in, deleted files out. The trailing @ keeps svn from reading an @ in a file
+# name as a revision.
+svn add --force --quiet assets
+[ "$MODE" = release ] && svn add --force --quiet trunk
+svn status | while IFS= read -r line; do
+	case "$line" in
+		'!'*) svn rm --quiet "${line:8}@" ;;
+	esac
+done
+
+# Without a mime type, wordpress.org serves images as downloads instead of showing them.
+shopt -s nullglob
+for f in assets/*.png; do svn propset --quiet svn:mime-type image/png "$f"; done
+for f in assets/*.jpg assets/*.jpeg; do svn propset --quiet svn:mime-type image/jpeg "$f"; done
+for f in assets/*.gif; do svn propset --quiet svn:mime-type image/gif "$f"; done
+# svn warns that an SVG looks like text. It is, and that is fine.
+for f in assets/*.svg; do svn propset --quiet --force svn:mime-type image/svg+xml "$f" 2>/dev/null; done
+shopt -u nullglob
+
+if [ "$MODE" = release ]; then
+	step "Copying trunk/ to tags/$VERSION"
+	svn copy --quiet trunk "tags/$VERSION"
+fi
+
+# ---------------------------------------------------------------------------------------
+# Review and commit.
+# ---------------------------------------------------------------------------------------
+
+changes="$(svn status)"
+if [ -z "$changes" ]; then
+	echo "Nothing to commit: wordpress.org already matches this repo."
+	exit 0
+fi
+
+echo
+echo "$changes"
+echo
+
+if [ "$DRY_RUN" = 1 ]; then
+	echo "Dry run: nothing was committed. The next run resets the working copy."
+	exit 0
+fi
+
+if [ "$MODE" = release ]; then
+	message="Release $VERSION"
+else
+	message="Update directory assets"
+fi
+
+read -r -p "Commit \"$message\" to wordpress.org as $SVN_USER? [y/N] " answer
+case "$answer" in
+	y | Y | yes) ;;
+	*) echo "Nothing was committed."; exit 1 ;;
+esac
+
+svn commit --username "$SVN_USER" -m "$message"
+
+if [ "$MODE" = release ]; then
+	cd "$ROOT"
+	if ! git rev-parse -q --verify "refs/tags/v$VERSION" >/dev/null; then
+		git tag -a "v$VERSION" -m "Katla Cookie Consent $VERSION"
+		git push --quiet origin "v$VERSION"
+	fi
+	echo "Released $VERSION. https://wordpress.org/plugins/$SLUG/ updates within a few minutes."
+else
+	echo "Assets updated. https://wordpress.org/plugins/$SLUG/ can take a few minutes to show them."
+fi

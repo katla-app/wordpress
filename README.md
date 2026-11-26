@@ -17,10 +17,13 @@ Docs for the underlying platform: <https://docs.katla.app>
 
 ## Install
 
-Copy the plugin into `wp-content/plugins/katla-consent`, activate it, then set your Site ID:
+Install **Katla Cookie Consent** from the
+[WordPress plugin directory](https://wordpress.org/plugins/katla-consent/): in WordPress, go to
+**Plugins → Add New Plugin** and search for it. Or install it from WP-CLI and set your Site ID
+in the same go:
 
 ```bash
-wp plugin activate katla-consent
+wp plugin install katla-consent --activate
 wp katla site-id 00000000-0000-0000-0000-000000000000
 wp katla verify
 ```
