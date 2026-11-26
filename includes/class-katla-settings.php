@@ -30,7 +30,7 @@ class Katla_Settings {
 		return array(
 			// Connection.
 			'site_id'                  => '',
-			'base_url'                 => 'https://dist.katla.app',
+			'base_url'                 => Katla_Client::BASE_URL,
 			'verification_token'       => '',
 
 			// Loading.

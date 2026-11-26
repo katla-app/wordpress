@@ -8,13 +8,24 @@
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Fetches cookie, policy and manifest data from dist.katla.app and caches it in
+ * Fetches cookie, policy and manifest data from cdn.katla.app and caches it in
  * transients so front-end rendering never blocks on a remote request twice.
  */
 class Katla_Client {
 
 	const TRANSIENT_PREFIX = 'katla_';
 	const INDEX_OPTION     = 'katla_cache_index';
+
+	/**
+	 * Where Katla serves each site's script, policies and data.
+	 */
+	const BASE_URL = 'https://cdn.katla.app';
+
+	/**
+	 * Katla's previous host, now retired. Up to 1.2.0 the plugin saved it as the base URL
+	 * on activation, so a stored copy is read as the current host.
+	 */
+	const RETIRED_BASE_URL = 'https://dist.katla.app';
 
 	/**
 	 * Per-request memoisation.
@@ -31,7 +42,11 @@ class Katla_Client {
 	public static function base_url(): string {
 		$base = untrailingslashit( (string) Katla_Settings::get( 'base_url' ) );
 
-		return $base ? $base : 'https://dist.katla.app';
+		if ( '' === $base || self::RETIRED_BASE_URL === $base ) {
+			return self::BASE_URL;
+		}
+
+		return $base;
 	}
 
 	/**

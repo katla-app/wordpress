@@ -4,7 +4,7 @@ Tags: cookie consent, gdpr, ccpa, cookie banner, woocommerce
 Requires at least: 6.3
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.2.0
+Stable tag: 1.2.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -46,9 +46,9 @@ A Katla account with a verified domain and at least one completed scan. Get your
 
 This plugin connects your site to [Katla](https://katla.app), a cookie consent service. It needs Katla to work: the banner, the cookie list and the policies all come from your Katla site.
 
-* **Consent script, from dist.katla.app.** On every page, the visitor's browser loads your site's consent script from `https://dist.katla.app/{your Site ID}.js`. It shows the banner, blocks cookies until the visitor chooses, and sends Google Consent Mode signals when that is on. Like any file a browser downloads, the request carries the visitor's IP address and browser details.
+* **Consent script, from cdn.katla.app.** On every page, the visitor's browser loads your site's consent script from `https://cdn.katla.app/{your Site ID}.js`. It shows the banner, blocks cookies until the visitor chooses, and sends Google Consent Mode signals when that is on. Like any file a browser downloads, the request carries the visitor's IP address and browser details.
 * **Consent records, to consent.katla.app.** When a visitor makes or changes a choice, the script sends it to `https://consent.katla.app` as proof of consent: the choice and the categories allowed, the regulation that applied, the browser's user agent, an anonymised IP address and the country.
-* **Cookie and policy data, from dist.katla.app.** Your server fetches your site's cookie list, cookie and privacy policies and a manifest from `https://dist.katla.app/{your Site ID}`: when a page or the settings screen needs them and the cached copy has expired, and when you connect or check again on the Setup tab or test the connection on the Tools tab. Each request sends the Site ID, a language, and the plugin version and your site's address in the user agent. The answers are cached on your server.
+* **Cookie and policy data, from cdn.katla.app.** Your server fetches your site's cookie list, cookie and privacy policies and a manifest from `https://cdn.katla.app/{your Site ID}`: when a page or the settings screen needs them and the cached copy has expired, and when you connect or check again on the Setup tab or test the connection on the Tools tab. Each request sends the Site ID, a language, and the plugin version and your site's address in the user agent. The answers are cached on your server.
 
 No other service is contacted. The domain names offered on the Blocking tab, such as googletagmanager.com, are suggestions for matching scripts that other plugins add to your pages; this plugin never connects to them.
 
@@ -70,7 +70,7 @@ Katla's cookie guard blocks cookie writes, not script loading. Add the script's 
 
 = Where should the script load? =
 
-First in the head, which is where the plugin always prints it. The cookie guard has to run before anything else can set a cookie, and the Google Consent Mode default before any Google tag reads consent. If a caching or optimisation plugin defers, delays or combines JavaScript, exclude dist.katla.app from it.
+First in the head, which is where the plugin always prints it. The cookie guard has to run before anything else can set a cookie, and the Google Consent Mode default before any Google tag reads consent. If a caching or optimisation plugin defers, delays or combines JavaScript, exclude cdn.katla.app from it.
 
 = Can I build my own banner? =
 
@@ -84,6 +84,9 @@ Yes. Choose **Advanced / headless** mode and set the banner to **Bring your own*
 4. A generated cookie policy page.
 
 == Changelog ==
+
+= 1.2.1 =
+* The Katla script, policies and cookie data now load from cdn.katla.app, Katla's current host, instead of the retired dist.katla.app. Sites that saved the old address switch over by themselves.
 
 = 1.2.0 =
 * Guided setup: a Setup tab connects the site, checks that Google Consent Mode and Google's banner text are on in Katla, and suggests the WP Consent API where Site Kit by Google is active.
@@ -100,3 +103,8 @@ Yes. Choose **Advanced / headless** mode and set the banner to **Bring your own*
 
 = 1.0.0 =
 * Initial release.
+
+== Upgrade Notice ==
+
+= 1.2.1 =
+Katla now loads from cdn.katla.app. If a caching or optimisation plugin excludes dist.katla.app from deferring, delaying or combining JavaScript, exclude cdn.katla.app instead.

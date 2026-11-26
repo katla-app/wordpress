@@ -626,7 +626,7 @@ class Katla_Admin {
 	private function render_setup_load_order(): void {
 		$this->open_setup_step( 3, 'done', __( 'Katla loads before Google tags', 'katla-consent' ) );
 		echo '<p>' . esc_html__( 'The plugin prints the Katla script first in the page head, so the Consent Mode default is in place before Google Analytics, Google Ads or Tag Manager read it, whichever plugin or theme adds them.', 'katla-consent' ) . '</p>';
-		echo '<p>' . esc_html__( 'If a caching or optimisation plugin defers, delays or combines JavaScript, exclude dist.katla.app from it. Moved later, the script cannot set the default in time.', 'katla-consent' ) . '</p>';
+		echo '<p>' . esc_html__( 'If a caching or optimisation plugin defers, delays or combines JavaScript, exclude cdn.katla.app from it. Moved later, the script cannot set the default in time.', 'katla-consent' ) . '</p>';
 		$this->close_setup_step();
 	}
 

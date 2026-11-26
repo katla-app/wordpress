@@ -34,7 +34,7 @@ Or paste it into **Settings → Katla Consent**.
 
 ### Hosted widget (default)
 
-Loads `https://dist.katla.app/{siteId}.js`. Katla renders the banner and the preferences
+Loads `https://cdn.katla.app/{siteId}.js`. Katla renders the banner and the preferences
 dialog, styled from your Katla dashboard.
 
 ### Advanced / headless
@@ -166,7 +166,7 @@ Anything the plugin holds back is marked up so you can style or extend it:
 | `katla_blocked_patterns` | Script URL fragments gated behind consent |
 | `katla_blocked_placeholder` | Markup shown in place of blocked content |
 | `katla_policy_html` | Server-rendered policy HTML |
-| `katla_dist_url` | Any generated dist.katla.app URL |
+| `katla_dist_url` | Any generated cdn.katla.app URL |
 | `katla_http_timeout` | HTTP timeout for Katla requests |
 
 ### Actions
@@ -233,7 +233,7 @@ the Tools tab, via `wp katla flush`, and on deactivation.
 
 * **Load order matters.** The cookie guard must run before any script that sets cookies, and
   the Google Consent Mode default before any Google tag reads consent. The plugin prints the
-  Katla script at the very start of `<head>` for both reasons. Exclude `dist.katla.app` from
+  Katla script at the very start of `<head>` for both reasons. Exclude `cdn.katla.app` from
   JS deferral, delay or combination in optimisation plugins, which would move it back.
 * **DMA equal prominence.** In the built-in banner, "Reject all" and "Accept all" use
   identical size, padding and weight so neither is the nudged choice.
