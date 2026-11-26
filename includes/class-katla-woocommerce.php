@@ -147,7 +147,7 @@ class Katla_WooCommerce {
 	 */
 	public static function account_settings_link(): void {
 		echo '<p class="katla-account-settings">';
-		echo do_shortcode( '[katla_cookie_settings tag="a"]' );
+		echo wp_kses_post( Katla_Shortcodes::settings_link( array( 'tag' => 'a' ) ) );
 		echo '</p>';
 	}
 }

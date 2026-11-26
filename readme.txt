@@ -1,5 +1,5 @@
 === Katla Cookie Consent ===
-Contributors: katla
+Contributors: katlaapp
 Tags: cookie consent, gdpr, ccpa, cookie banner, woocommerce
 Requires at least: 6.3
 Tested up to: 7.1
@@ -48,7 +48,9 @@ This plugin connects your site to [Katla](https://katla.app), a cookie consent s
 
 * **Consent script, from dist.katla.app.** On every page, the visitor's browser loads your site's consent script from `https://dist.katla.app/{your Site ID}.js`. It shows the banner, blocks cookies until the visitor chooses, and sends Google Consent Mode signals when that is on. Like any file a browser downloads, the request carries the visitor's IP address and browser details.
 * **Consent records, to consent.katla.app.** When a visitor makes or changes a choice, the script sends it to `https://consent.katla.app` as proof of consent: the choice and the categories allowed, the regulation that applied, the browser's user agent, an anonymised IP address and the country.
-* **Cookie and policy data, from dist.katla.app.** Your server fetches your site's cookie list, cookie and privacy policies and a manifest from `https://dist.katla.app/{your Site ID}`, sending only the Site ID and a language. The answers are cached on your server.
+* **Cookie and policy data, from dist.katla.app.** Your server fetches your site's cookie list, cookie and privacy policies and a manifest from `https://dist.katla.app/{your Site ID}`: when a page or the settings screen needs them and the cached copy has expired, and when you connect or check again on the Setup tab or test the connection on the Tools tab. Each request sends the Site ID, a language, and the plugin version and your site's address in the user agent. The answers are cached on your server.
+
+No other service is contacted. The domain names offered on the Blocking tab, such as googletagmanager.com, are suggestions for matching scripts that other plugins add to your pages; this plugin never connects to them.
 
 Katla's [terms of service](https://katla.app/terms) and [privacy policy](https://katla.app/privacy-policy).
 

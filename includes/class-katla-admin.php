@@ -16,6 +16,11 @@ class Katla_Admin {
 	const NOTICE = 'katla_admin_notice';
 
 	/**
+	 * User meta set when someone dismisses the setup notice.
+	 */
+	const SETUP_NOTICE_DISMISSED = 'katla_setup_notice_dismissed';
+
+	/**
 	 * The Katla dashboard, where the site's banner and Consent Mode settings live.
 	 */
 	const DASHBOARD_URL = 'https://katla.app';
@@ -47,6 +52,7 @@ class Katla_Admin {
 		add_action( 'admin_post_katla_test_connection', array( $this, 'handle_test_connection' ) );
 		add_action( 'admin_post_katla_create_policy_page', array( $this, 'handle_create_policy_page' ) );
 		add_action( 'admin_post_katla_setup_connect', array( $this, 'handle_setup_connect' ) );
+		add_action( 'admin_post_katla_dismiss_setup_notice', array( $this, 'handle_dismiss_setup_notice' ) );
 	}
 
 	/**
@@ -174,11 +180,11 @@ class Katla_Admin {
 	}
 
 	/**
-	 * Point to the setup on the Dashboard and Plugins screens until the plugin is connected.
+	 * Point to the setup on the Plugins screen until the plugin is connected.
 	 *
-	 * Only there, and only for people who can do the setup: an unconnected plugin shows no
-	 * banner at all, which is worth saying where an administrator looks after installing it,
-	 * and not worth repeating on every screen.
+	 * Only there, only for people who can do the setup, and only until they connect or
+	 * dismiss it: an unconnected plugin shows no banner at all, which is worth saying where
+	 * an administrator has just activated it, and not anywhere else.
 	 *
 	 * @return void
 	 */
@@ -189,16 +195,36 @@ class Katla_Admin {
 
 		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
 
-		if ( ! $screen || ! in_array( $screen->id, array( 'dashboard', 'plugins' ), true ) ) {
+		if ( ! $screen || 'plugins' !== $screen->id ) {
+			return;
+		}
+
+		if ( get_user_meta( get_current_user_id(), self::SETUP_NOTICE_DISMISSED, true ) ) {
 			return;
 		}
 
 		printf(
-			'<div class="notice notice-info"><p>%1$s</p><p><a class="button button-primary" href="%2$s">%3$s</a></p></div>',
+			'<div class="notice notice-info"><p>%1$s</p><p><a class="button button-primary" href="%2$s">%3$s</a> <a class="button-link" href="%4$s">%5$s</a></p></div>',
 			esc_html__( 'Katla Cookie Consent is installed but not connected to Katla yet, so visitors see no consent banner.', 'katla-consent' ),
 			esc_url( self::tab_url( 'setup' ) ),
-			esc_html__( 'Set up Katla', 'katla-consent' )
+			esc_html__( 'Set up Katla', 'katla-consent' ),
+			esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=katla_dismiss_setup_notice' ), 'katla_dismiss_setup_notice' ) ),
+			esc_html__( 'Dismiss', 'katla-consent' )
 		);
+	}
+
+	/**
+	 * Hide the setup notice for the current user, for good.
+	 *
+	 * @return void
+	 */
+	public function handle_dismiss_setup_notice(): void {
+		$this->authorize( 'katla_dismiss_setup_notice' );
+
+		update_user_meta( get_current_user_id(), self::SETUP_NOTICE_DISMISSED, 1 );
+
+		wp_safe_redirect( admin_url( 'plugins.php' ) );
+		exit;
 	}
 
 	/**
@@ -887,15 +913,10 @@ class Katla_Admin {
 			__( 'Allow WooCommerce cart, session and checkout cookies through the guard, and never gate store-critical scripts behind consent.', 'katla-consent' )
 		);
 
-		$protected = array_map(
-			static function ( string $cookie ): string {
-				return '<code>' . esc_html( $cookie ) . '</code>';
-			},
-			Katla_WooCommerce::essential_cookies()
-		);
-
-		echo '<tr><th scope="row">' . esc_html__( 'Protected cookies', 'katla-consent' ) . '</th><td>'
-			. implode( ', ', $protected ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- each item escaped above.
+		echo '<tr><th scope="row">' . esc_html__( 'Protected cookies', 'katla-consent' ) . '</th><td>';
+		foreach ( array_values( Katla_WooCommerce::essential_cookies() ) as $index => $cookie ) {
+			echo ( $index ? ', ' : '' ) . '<code>' . esc_html( $cookie ) . '</code>';
+		}
 		echo '<p class="description">' . esc_html__( 'Order attribution cookies (sbjs_*) are deliberately left out — they are marketing cookies and stay behind consent. Gate the wc-order-attribution script on the Blocking tab to stop them being set at all.', 'katla-consent' ) . '</p>';
 		echo '</td></tr>';
 
@@ -994,29 +1015,30 @@ class Katla_Admin {
 			return;
 		}
 
-		$total = 0;
-		$rows  = '';
+		$counts = array();
 
 		foreach ( Katla_Categories::ids() as $category ) {
 			$count = isset( $data['cookies'][ $category ] ) ? count( (array) $data['cookies'][ $category ] ) : 0;
-			if ( ! $count ) {
-				continue;
+			if ( $count ) {
+				$counts[ $category ] = $count;
 			}
-			$total += $count;
-			$rows  .= sprintf(
-				'<tr><td>%s</td><td>%d</td></tr>',
-				esc_html( Katla_Categories::label( $category ) ),
-				(int) $count
-			);
 		}
 
-		if ( ! $total ) {
+		if ( ! $counts ) {
 			echo '<p>' . esc_html__( 'No cookies have been classified for this site yet. Run a scan in Katla.', 'katla-consent' ) . '</p>';
 
 			return;
 		}
 
-		echo '<table class="widefat striped katla-summary"><tbody>' . $rows . '</tbody></table>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built from escaped parts above.
+		echo '<table class="widefat striped katla-summary"><tbody>';
+		foreach ( $counts as $category => $count ) {
+			printf(
+				'<tr><td>%s</td><td>%d</td></tr>',
+				esc_html( Katla_Categories::label( $category ) ),
+				(int) $count
+			);
+		}
+		echo '</tbody></table>';
 	}
 
 	// -------------------------------------------------------------------
@@ -1074,18 +1096,16 @@ class Katla_Admin {
 	private function text_field( string $key, string $label, string $description = '', array $attrs = array() ): void {
 		$this->open_row( $key, $label );
 
-		$extra = '';
-		foreach ( $attrs as $attr => $value ) {
-			$extra .= sprintf( ' %s="%s"', esc_attr( $attr ), esc_attr( $value ) );
-		}
-
 		printf(
-			'<input type="text" class="regular-text" id="katla-%1$s" name="%2$s" value="%3$s"%4$s />',
+			'<input type="text" class="regular-text" id="katla-%1$s" name="%2$s" value="%3$s"',
 			esc_attr( $key ),
 			esc_attr( $this->name( $key ) ),
-			esc_attr( (string) Katla_Settings::get( $key ) ),
-			$extra // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped per attribute above.
+			esc_attr( (string) Katla_Settings::get( $key ) )
 		);
+		foreach ( $attrs as $attr => $value ) {
+			printf( ' %s="%s"', esc_attr( $attr ), esc_attr( $value ) );
+		}
+		echo ' />';
 
 		$this->description( $description );
 		echo '</td></tr>';
@@ -1374,10 +1394,10 @@ class Katla_Admin {
 	 * @return void
 	 */
 	private function action_button( string $action, string $label ): void {
+		printf( '<form method="post" action="%s" class="katla-action">', esc_url( admin_url( 'admin-post.php' ) ) );
+		wp_nonce_field( $action );
 		printf(
-			'<form method="post" action="%1$s" class="katla-action">%2$s<input type="hidden" name="action" value="%3$s" /><button type="submit" class="button">%4$s</button></form>',
-			esc_url( admin_url( 'admin-post.php' ) ),
-			wp_nonce_field( $action, '_wpnonce', true, false ), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- generated by core.
+			'<input type="hidden" name="action" value="%1$s" /><button type="submit" class="button">%2$s</button></form>',
 			esc_attr( $action ),
 			esc_html( $label )
 		);

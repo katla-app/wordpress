@@ -31,6 +31,7 @@ delete_option( 'katla_seen_scripts' );
 delete_option( 'katla_cookie_policy_page' );
 delete_transient( 'katla_seen_scripts_lock' );
 delete_transient( 'katla_admin_notice' );
+delete_metadata( 'user', 0, 'katla_setup_notice_dismissed', '', true );
 
 if ( is_multisite() ) {
 	delete_site_transient( 'katla_admin_notice' );

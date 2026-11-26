@@ -195,7 +195,13 @@ class Katla_Frontend {
 			wp_enqueue_style( self::HANDLE_BANNER );
 		}
 
-		wp_add_inline_style( self::HANDLE_STYLE, self::inline_banner_css() );
+		$css = self::inline_banner_css();
+
+		if ( '' !== $css ) {
+			// Built from validated values only, see css_value(). wp_strip_all_tags is a second
+			// guard that the style element cannot be closed early.
+			wp_add_inline_style( self::HANDLE_STYLE, wp_strip_all_tags( $css ) );
+		}
 	}
 
 	/**
@@ -447,10 +453,57 @@ class Katla_Frontend {
 
 		$declarations = '';
 		foreach ( $vars as $name => $value ) {
-			$name          = '--' . ltrim( preg_replace( '/[^a-z0-9\-]/i', '', (string) $name ), '-' );
-			$declarations .= sprintf( '%s:%s;', $name, esc_attr( (string) $value ) );
+			$name  = ltrim( (string) preg_replace( '/[^a-z0-9\-]/i', '', (string) $name ), '-' );
+			$value = self::css_value( $value );
+
+			if ( '' === $name || null === $value ) {
+				continue;
+			}
+
+			$declarations .= '--' . $name . ':' . $value . ';';
 		}
 
-		return ':root{' . $declarations . '}';
+		return $declarations ? ':root{' . $declarations . '}' : '';
+	}
+
+	/**
+	 * A custom property value that can only ever be a value, or null.
+	 *
+	 * The values are colours, lengths, shadows, font stacks and var() references, so only
+	 * what those are written with passes: letters, digits, spaces and `# % . , ( ) + - * /`,
+	 * plus quotes for font names. Nothing that ends a declaration or a rule, or leaves the
+	 * style element (`; : { } < > \`), and no url() or expression(), so a filtered value
+	 * cannot add declarations, load anything or reach the page's markup.
+	 *
+	 * @param mixed $value Value from the katla_banner_css_vars filter.
+	 * @return string|null
+	 */
+	private static function css_value( $value ): ?string {
+		if ( ! is_string( $value ) && ! is_int( $value ) && ! is_float( $value ) ) {
+			return null;
+		}
+
+		$value = trim( (string) $value );
+
+		if ( '' === $value || strlen( $value ) > 200 ) {
+			return null;
+		}
+
+		if ( ! preg_match( '/^[a-zA-Z0-9\s#%.,()+\-*\/\'"]+$/', $value ) ) {
+			return null;
+		}
+
+		if ( preg_match( '/\b(?:url|expression)\s*\(/i', $value ) ) {
+			return null;
+		}
+
+		// Balanced, so a stray bracket or quote cannot run on into what follows.
+		if ( substr_count( $value, '(' ) !== substr_count( $value, ')' )
+			|| 0 !== substr_count( $value, '"' ) % 2
+			|| 0 !== substr_count( $value, "'" ) % 2 ) {
+			return null;
+		}
+
+		return $value;
 	}
 }
